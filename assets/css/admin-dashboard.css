@@ -1,0 +1,467 @@
+/**
+ * Jetstrike Conflict Detector — Admin Dashboard Styles
+ *
+ * @package Jetstrike\ConflictDetector
+ */
+
+/* ── Layout ────────────────────────────────────────────────── */
+
+.jetstrike-cd-wrap {
+    max-width: 1200px;
+    margin: 20px auto 0;
+}
+
+.jetstrike-cd-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 23px;
+    font-weight: 400;
+    margin-bottom: 20px;
+}
+
+.jetstrike-cd-header .dashicons {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+    color: #2271b1;
+}
+
+.jetstrike-cd-grid {
+    display: grid;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.jetstrike-cd-grid--3 {
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+@media (max-width: 1024px) {
+    .jetstrike-cd-grid--3 {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .jetstrike-cd-grid--3 {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ── Cards ─────────────────────────────────────────────────── */
+
+.jetstrike-cd-card {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 20px;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.jetstrike-cd-card h2,
+.jetstrike-cd-card h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 15px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.jetstrike-cd-card--full {
+    grid-column: 1 / -1;
+}
+
+.jetstrike-cd-card--success {
+    border-left: 4px solid #28a745;
+}
+
+.jetstrike-cd-card--upgrade {
+    background: linear-gradient(135deg, #1d2327 0%, #2c3338 100%);
+    color: #fff;
+    border: none;
+}
+
+.jetstrike-cd-card--upgrade h3 {
+    color: #fff;
+    font-size: 18px;
+}
+
+.jetstrike-cd-card--upgrade p {
+    color: #c3c4c7;
+    font-size: 14px;
+}
+
+.jetstrike-cd-card--upgrade ul {
+    list-style: none;
+    padding: 0;
+    margin: 15px 0;
+}
+
+.jetstrike-cd-card--upgrade li {
+    padding: 4px 0 4px 24px;
+    position: relative;
+    color: #e0e0e0;
+}
+
+.jetstrike-cd-card--upgrade li::before {
+    content: "\2713";
+    position: absolute;
+    left: 0;
+    color: #28a745;
+    font-weight: 700;
+}
+
+.jetstrike-cd-card--upgrade .button-primary {
+    background: #2271b1;
+    border-color: #2271b1;
+    font-size: 14px;
+    padding: 8px 24px;
+    height: auto;
+}
+
+/* ── Health Score ───────────────────────────────────────────── */
+
+.jetstrike-cd-health-score {
+    text-align: center;
+    padding: 10px 0 15px;
+}
+
+.jetstrike-cd-health-circle {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 6px solid var(--score-color, #2271b1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 10px;
+}
+
+.jetstrike-cd-health-grade {
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 1;
+    color: #1d2327;
+}
+
+.jetstrike-cd-health-number {
+    font-size: 12px;
+    color: #646970;
+}
+
+.jetstrike-cd-health-factors {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0 0;
+    font-size: 12px;
+}
+
+.jetstrike-cd-health-factors li {
+    padding: 4px 0;
+    border-bottom: 1px solid #f0f0f1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.jetstrike-cd-health-factors li:last-child {
+    border-bottom: none;
+}
+
+.jetstrike-cd-factor-impact {
+    display: inline-block;
+    min-width: 30px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 11px;
+    color: #dc3545;
+}
+
+/* ── Conflict Counts ───────────────────────────────────────── */
+
+.jetstrike-cd-conflict-counts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.jetstrike-cd-severity {
+    text-align: center;
+    padding: 12px 8px;
+    border-radius: 4px;
+    background: #f0f0f1;
+}
+
+.jetstrike-cd-severity-count {
+    display: block;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.jetstrike-cd-severity-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #646970;
+}
+
+.jetstrike-cd-severity--critical { background: #fce4e4; }
+.jetstrike-cd-severity--critical .jetstrike-cd-severity-count { color: #dc3545; }
+.jetstrike-cd-severity--high { background: #fef3e3; }
+.jetstrike-cd-severity--high .jetstrike-cd-severity-count { color: #fd7e14; }
+.jetstrike-cd-severity--medium { background: #fef9e7; }
+.jetstrike-cd-severity--medium .jetstrike-cd-severity-count { color: #b38600; }
+.jetstrike-cd-severity--low { background: #f0f0f1; }
+.jetstrike-cd-severity--low .jetstrike-cd-severity-count { color: #646970; }
+
+.jetstrike-cd-stat-info {
+    text-align: center;
+    font-size: 13px;
+    color: #646970;
+    margin: 0;
+}
+
+/* ── Actions ───────────────────────────────────────────────── */
+
+.jetstrike-cd-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.jetstrike-cd-actions .button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.jetstrike-cd-actions .button .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+.jetstrike-cd-last-scan {
+    text-align: center;
+    font-size: 12px;
+    color: #646970;
+    margin: 0;
+}
+
+/* ── Scan Progress ─────────────────────────────────────────── */
+
+.jetstrike-cd-scan-progress {
+    margin-top: 15px;
+    text-align: center;
+}
+
+.jetstrike-cd-progress-bar {
+    height: 8px;
+    background: #f0f0f1;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.jetstrike-cd-progress-fill {
+    height: 100%;
+    background: #2271b1;
+    border-radius: 4px;
+    width: 0%;
+    transition: width 0.3s ease;
+    animation: jetstrike-progress-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes jetstrike-progress-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+.jetstrike-cd-progress-text {
+    font-size: 13px;
+    color: #646970;
+    margin: 5px 0;
+}
+
+/* ── Badges ────────────────────────────────────────────────── */
+
+.jetstrike-cd-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    line-height: 1.6;
+}
+
+.jetstrike-cd-badge--critical { background: #dc3545; color: #fff; }
+.jetstrike-cd-badge--high { background: #fd7e14; color: #fff; }
+.jetstrike-cd-badge--medium { background: #ffc107; color: #1d2327; }
+.jetstrike-cd-badge--low { background: #6c757d; color: #fff; }
+.jetstrike-cd-badge--free { background: #f0f0f1; color: #646970; }
+.jetstrike-cd-badge--pro { background: #2271b1; color: #fff; }
+.jetstrike-cd-badge--agency { background: #8b5cf6; color: #fff; }
+.jetstrike-cd-badge--completed { background: #28a745; color: #fff; }
+.jetstrike-cd-badge--running { background: #2271b1; color: #fff; }
+.jetstrike-cd-badge--queued { background: #646970; color: #fff; }
+.jetstrike-cd-badge--failed { background: #dc3545; color: #fff; }
+.jetstrike-cd-badge--cancelled { background: #6c757d; color: #fff; }
+
+/* ── Tables ────────────────────────────────────────────────── */
+
+.jetstrike-cd-table {
+    border-collapse: collapse;
+}
+
+.jetstrike-cd-table th {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #646970;
+    font-weight: 600;
+}
+
+.jetstrike-cd-table td {
+    vertical-align: top;
+    font-size: 13px;
+}
+
+.jetstrike-cd-table code {
+    font-size: 11px;
+    padding: 2px 6px;
+    background: #f0f0f1;
+    border-radius: 3px;
+}
+
+.jetstrike-cd-recommendation {
+    font-size: 12px;
+    color: #646970;
+}
+
+.jetstrike-cd-conflict-action {
+    min-width: 120px;
+}
+
+.jetstrike-cd-view-all {
+    font-size: 13px;
+    font-weight: 400;
+    text-decoration: none;
+}
+
+/* ── Empty State ───────────────────────────────────────────── */
+
+.jetstrike-cd-empty-state {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.jetstrike-cd-empty-state .dashicons {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: #2271b1;
+    margin-bottom: 10px;
+}
+
+.jetstrike-cd-card--success .jetstrike-cd-empty-state .dashicons {
+    color: #28a745;
+}
+
+.jetstrike-cd-empty-state h3 {
+    display: block;
+    font-size: 18px;
+    margin-bottom: 8px;
+}
+
+.jetstrike-cd-empty-state p {
+    color: #646970;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+/* ── Scan Meta ─────────────────────────────────────────────── */
+
+.jetstrike-cd-scan-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.jetstrike-cd-scan-header h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.jetstrike-cd-scan-meta {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    padding: 12px 16px;
+    background: #f6f7f7;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+/* ── License ───────────────────────────────────────────────── */
+
+.jetstrike-cd-license-status {
+    margin-left: 10px;
+    font-size: 12px;
+}
+
+.jetstrike-cd-license-status--active {
+    color: #28a745;
+    font-weight: 600;
+}
+
+.jetstrike-cd-pro-badge {
+    display: inline-block;
+    background: #2271b1;
+    color: #fff !important;
+    padding: 1px 8px;
+    border-radius: 3px;
+    font-size: 10px !important;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+/* ── Admin Notices ─────────────────────────────────────────── */
+
+.jetstrike-cd-notice {
+    border-left-width: 4px;
+}
+
+.jetstrike-cd-notice p {
+    font-size: 13px;
+}
+
+/* ── Loading Spinner ───────────────────────────────────────── */
+
+.jetstrike-cd-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #f0f0f1;
+    border-top-color: #2271b1;
+    border-radius: 50%;
+    animation: jetstrike-spin 0.6s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+}
+
+@keyframes jetstrike-spin {
+    to { transform: rotate(360deg); }
+}
