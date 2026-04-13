@@ -407,7 +407,8 @@ PHP;
 		}
 
 		// Leave 30 seconds of buffer.
-		$elapsed = microtime( true ) - $_SERVER['REQUEST_TIME_FLOAT'];
+		$request_time = isset( $_SERVER['REQUEST_TIME_FLOAT'] ) ? (float) $_SERVER['REQUEST_TIME_FLOAT'] : microtime( true );
+		$elapsed      = microtime( true ) - $request_time;
 		return $elapsed > ( $max_time - 30 );
 	}
 }
