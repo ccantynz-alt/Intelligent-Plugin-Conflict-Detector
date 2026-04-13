@@ -145,12 +145,14 @@ final class AdminPage {
      * Render scan results page.
      */
     public function render_scan_results(): void {
-        $page = max(1, (int) ($_GET['paged'] ?? 1));
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin page navigation.
+        $page = max(1, absint($_GET['paged'] ?? 1));
         $scans = $this->repository->list_scans($page, 20);
         $tier = FeatureFlags::get_tier();
 
         // If viewing a specific scan.
-        $scan_id = (int) ($_GET['scan_id'] ?? 0);
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin page navigation.
+        $scan_id = absint($_GET['scan_id'] ?? 0);
         $current_scan = null;
         $scan_conflicts = [];
 

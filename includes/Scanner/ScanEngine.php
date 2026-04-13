@@ -36,6 +36,11 @@ final class ScanEngine {
     public function run(array $plugins, string $scan_type = 'full'): array {
         $all_conflicts = [];
 
+        // Phase 0: Check cloud intelligence for already-known conflicts (instant).
+        $cloud = new \Jetstrike\ConflictDetector\Cloud\ConflictIntelligence();
+        $known = $cloud->query_known_conflicts($plugins);
+        $all_conflicts = array_merge($all_conflicts, $known);
+
         // Phase 1: Static analysis (available to all tiers).
         $all_conflicts = array_merge($all_conflicts, $this->run_static_analysis($plugins));
 

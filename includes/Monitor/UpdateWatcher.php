@@ -144,9 +144,11 @@ final class UpdateWatcher {
 
         $wpdb->query(
             $wpdb->prepare(
-                "UPDATE {$table} SET status = 'resolved', resolved_at = %s
-                WHERE status = 'active' AND (plugin_a = %s OR plugin_b = %s)",
+                "UPDATE {$table} SET status = %s, resolved_at = %s
+                WHERE status = %s AND (plugin_a = %s OR plugin_b = %s)",
+                'resolved',
                 current_time('mysql', true),
+                'active',
                 $plugin,
                 $plugin
             )

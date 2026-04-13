@@ -54,6 +54,91 @@ if (file_exists(JETSTRIKE_CD_PATH . 'vendor/autoload.php')) {
     });
 }
 
+// ── Freemius SDK Integration ─────────────────────────────────
+// Initialize Freemius BEFORE plugins_loaded (per Freemius best practices).
+if (! function_exists('jetstrike_cd_fs')) {
+    /**
+     * Create a helper function for easy Freemius SDK access.
+     *
+     * @return \Freemius
+     */
+    function jetstrike_cd_fs() {
+        global $jetstrike_cd_fs;
+
+        if (! isset($jetstrike_cd_fs)) {
+            // Freemius SDK path — install via: composer require freemius/wordpress-sdk
+            // Or download and place in /freemius/ directory.
+            $freemius_start = JETSTRIKE_CD_PATH . 'freemius/start.php';
+            $freemius_vendor = JETSTRIKE_CD_PATH . 'vendor/freemius/wordpress-sdk/start.php';
+
+            if (file_exists($freemius_start)) {
+                require_once $freemius_start;
+            } elseif (file_exists($freemius_vendor)) {
+                require_once $freemius_vendor;
+            } else {
+                // Freemius SDK not installed — fall back to built-in license manager.
+                return null;
+            }
+
+            $jetstrike_cd_fs = fs_dynamic_init([
+                'id'                  => '', // Set after Freemius account creation.
+                'slug'                => 'jetstrike-conflict-detector',
+                'premium_slug'        => 'jetstrike-conflict-detector-pro',
+                'type'                => 'plugin',
+                'public_key'          => '', // Set after Freemius account creation.
+                'is_premium'          => false,
+                'has_premium_version' => true,
+                'has_paid_plans'      => true,
+                'has_addons'          => false,
+                'is_org_compliant'    => true,
+                'trial'               => [
+                    'days'               => 14,
+                    'is_require_payment' => false,
+                ],
+                'menu'                => [
+                    'slug'    => 'jetstrike-cd',
+                    'contact' => true,
+                    'support' => true,
+                ],
+            ]);
+
+            // Sync Freemius plan with our FeatureFlags system.
+            $jetstrike_cd_fs->add_action('after_license_change', function () {
+                jetstrike_cd_sync_freemius_tier();
+            });
+
+            $jetstrike_cd_fs->add_action('after_plan_change', function () {
+                jetstrike_cd_sync_freemius_tier();
+            });
+        }
+
+        return $jetstrike_cd_fs;
+    }
+
+    /**
+     * Sync Freemius subscription tier with our FeatureFlags.
+     */
+    function jetstrike_cd_sync_freemius_tier(): void {
+        $fs = jetstrike_cd_fs();
+
+        if ($fs === null) {
+            return;
+        }
+
+        if ($fs->is_plan('agency')) {
+            update_option('jetstrike_cd_license_tier', 'agency');
+        } elseif ($fs->is_plan('pro') || $fs->is_paying()) {
+            update_option('jetstrike_cd_license_tier', 'pro');
+        } else {
+            update_option('jetstrike_cd_license_tier', 'free');
+        }
+    }
+
+    // Initialize Freemius.
+    jetstrike_cd_fs();
+    do_action('jetstrike_cd_fs_loaded');
+}
+
 // Activation hook.
 register_activation_hook(__FILE__, function (): void {
     \Jetstrike\ConflictDetector\Activator::activate();

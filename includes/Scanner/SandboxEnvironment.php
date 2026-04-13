@@ -177,11 +177,11 @@ final class SandboxEnvironment {
             $sandbox_data = json_decode(is_array($sandbox_header) ? $sandbox_header[0] : $sandbox_header, true);
 
             if (is_array($sandbox_data)) {
-                if (! empty($sandbox_data['errors'])) {
-                    $errors = array_merge($errors, $sandbox_data['errors']);
+                if (! empty($sandbox_data['errors']) && is_array($sandbox_data['errors'])) {
+                    $errors = array_merge($errors, array_map('sanitize_text_field', $sandbox_data['errors']));
                 }
-                if (! empty($sandbox_data['warnings'])) {
-                    $warnings = array_merge($warnings, $sandbox_data['warnings']);
+                if (! empty($sandbox_data['warnings']) && is_array($sandbox_data['warnings'])) {
+                    $warnings = array_merge($warnings, array_map('sanitize_text_field', $sandbox_data['warnings']));
                 }
             }
         }

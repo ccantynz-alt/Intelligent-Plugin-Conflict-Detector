@@ -292,6 +292,11 @@ final class ScanQueue {
         // Clear cached results.
         delete_transient('jetstrike_cd_scan_results');
         delete_transient('jetstrike_cd_conflict_summary');
+
+        // Send anonymized telemetry (if opted in).
+        $telemetry = new \Jetstrike\ConflictDetector\Cloud\Telemetry();
+        $plugins_tested = json_decode($this->repository->get_scan($scan_id)->plugins_tested ?? '[]', true);
+        $telemetry->report_scan($conflicts, count(is_array($plugins_tested) ? $plugins_tested : []));
     }
 
     /**

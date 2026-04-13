@@ -143,8 +143,9 @@ defined('ABSPATH') || exit;
         <div class="tablenav bottom">
             <div class="tablenav-pages">
                 <?php
+                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- paginate_links returns safe HTML.
                 echo paginate_links([
-                    'base'    => add_query_arg('paged', '%#%'),
+                    'base'    => esc_url(add_query_arg('paged', '%#%')),
                     'format'  => '',
                     'current' => $page,
                     'total'   => $total_pages,
