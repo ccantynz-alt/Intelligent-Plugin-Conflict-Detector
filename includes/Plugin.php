@@ -19,6 +19,7 @@ use Jetstrike\ConflictDetector\Monitor\BackgroundMonitor;
 use Jetstrike\ConflictDetector\Monitor\UpdateWatcher;
 use Jetstrike\ConflictDetector\Monitor\HealthMonitor;
 use Jetstrike\ConflictDetector\Cloud\Telemetry;
+use Jetstrike\ConflictDetector\CLI\Commands;
 use Jetstrike\ConflictDetector\Notification\NotificationManager;
 use Jetstrike\ConflictDetector\Subscription\LicenseManager;
 
@@ -79,6 +80,9 @@ final class Plugin {
         // Cloud telemetry (opt-in anonymous data sharing).
         $telemetry = new Telemetry();
         $telemetry->register();
+
+        // WP-CLI commands.
+        Commands::register();
 
         // Plugin action links.
         add_filter('plugin_action_links_' . JETSTRIKE_CD_BASENAME, [$this, 'add_action_links']);

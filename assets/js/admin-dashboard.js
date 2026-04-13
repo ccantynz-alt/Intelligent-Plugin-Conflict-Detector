@@ -24,6 +24,10 @@
             // Conflict status changes.
             $(document).on('change', '.jetstrike-cd-conflict-action', this.updateConflictStatus.bind(this));
 
+            // Auto-Fix buttons.
+            $(document).on('click', '.jetstrike-cd-autofix-btn', this.autoFixConflict.bind(this));
+            $(document).on('click', '.jetstrike-cd-revert-btn', this.revertFix.bind(this));
+
             // License activation.
             $(document).on('click', '#jetstrike-activate-license', this.activateLicense.bind(this));
             $(document).on('click', '#jetstrike-deactivate-license', this.deactivateLicense.bind(this));
@@ -173,6 +177,16 @@
                     ? '<br>vs <code>' + JetstrikeCD.escapeHtml(JetstrikeCD.dirname(conflict.plugin_b)) + '</code>'
                     : '';
 
+                var autoFixCell = '<td class="jetstrike-cd-autofix-cell">';
+                if (conflict.can_auto_fix) {
+                    autoFixCell += '<button type="button" class="button button-small jetstrike-cd-autofix-btn" ' +
+                        'data-conflict-id="' + conflict.id + '" title="' + JetstrikeCD.escapeHtml(conflict.fix_description || '') + '">' +
+                        '<span class="dashicons dashicons-admin-generic"></span> Auto-Fix</button>';
+                } else {
+                    autoFixCell += '<span class="jetstrike-cd-no-fix">&mdash;</span>';
+                }
+                autoFixCell += '</td>';
+
                 $table.append(
                     '<tr data-conflict-id="' + conflict.id + '">' +
                     '<td><span class="jetstrike-cd-badge jetstrike-cd-badge--' + conflict.severity + '">' +
@@ -183,6 +197,7 @@
                         JetstrikeCD.escapeHtml(conflict.recommendation) + '</em>' : '') + '</td>' +
                     '<td><code>' + JetstrikeCD.escapeHtml(JetstrikeCD.dirname(conflict.plugin_a)) + '</code>' +
                         pluginB + '</td>' +
+                    autoFixCell +
                     '<td><select class="jetstrike-cd-conflict-action" data-conflict-id="' + conflict.id + '">' +
                         '<option value="active" selected>Active</option>' +
                         '<option value="resolved">Mark Resolved</option>' +
@@ -270,6 +285,110 @@
                             });
                         }
                     }
+                }
+            });
+        },
+
+        // ── Auto-Fix ─────────────────────────────────────────
+
+        autoFixConflict: function (e) {
+            e.preventDefault();
+            var $btn = $(e.currentTarget);
+            var conflictId = $btn.data('conflict-id');
+
+            if (!confirm('Apply auto-fix for this conflict? A mu-plugin patch will be generated. You can revert this at any time.')) {
+                return;
+            }
+
+            $btn.prop('disabled', true).html('<span class="jetstrike-cd-spinner"></span> Fixing...');
+
+            $.ajax({
+                url: jetstrikeCD.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'jetstrike_cd_auto_fix',
+                    nonce: jetstrikeCD.ajaxNonce,
+                    conflict_id: conflictId
+                },
+                success: function (response) {
+                    if (response.success) {
+                        JetstrikeCD.showNotice('success', response.data.message);
+
+                        // Replace button with revert button.
+                        $btn.replaceWith(
+                            '<button type="button" class="button button-small jetstrike-cd-revert-btn" ' +
+                            'data-conflict-id="' + conflictId + '">' +
+                            '<span class="dashicons dashicons-undo"></span> Revert' +
+                            '</button>'
+                        );
+
+                        // Update status dropdown to resolved.
+                        $btn.closest('tr').find('.jetstrike-cd-conflict-action').val('resolved');
+
+                        // Fade the row to indicate it's resolved.
+                        $btn.closest('tr').addClass('jetstrike-cd-row-resolved');
+                    } else {
+                        $btn.prop('disabled', false).html(
+                            '<span class="dashicons dashicons-admin-generic"></span> Auto-Fix'
+                        );
+                        JetstrikeCD.showNotice('error', response.data.message);
+                    }
+                },
+                error: function () {
+                    $btn.prop('disabled', false).html(
+                        '<span class="dashicons dashicons-admin-generic"></span> Auto-Fix'
+                    );
+                    JetstrikeCD.showNotice('error', 'Auto-fix failed. Please try again.');
+                }
+            });
+        },
+
+        revertFix: function (e) {
+            e.preventDefault();
+            var $btn = $(e.currentTarget);
+            var conflictId = $btn.data('conflict-id');
+
+            if (!confirm('Revert this auto-fix? The conflict will become active again.')) {
+                return;
+            }
+
+            $btn.prop('disabled', true).text('Reverting...');
+
+            $.ajax({
+                url: jetstrikeCD.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'jetstrike_cd_revert_fix',
+                    nonce: jetstrikeCD.ajaxNonce,
+                    conflict_id: conflictId
+                },
+                success: function (response) {
+                    if (response.success) {
+                        JetstrikeCD.showNotice('info', response.data.message);
+
+                        // Replace revert button with auto-fix button.
+                        $btn.replaceWith(
+                            '<button type="button" class="button button-small jetstrike-cd-autofix-btn" ' +
+                            'data-conflict-id="' + conflictId + '">' +
+                            '<span class="dashicons dashicons-admin-generic"></span> Auto-Fix' +
+                            '</button>'
+                        );
+
+                        // Update status dropdown to active.
+                        $btn.closest('tr').find('.jetstrike-cd-conflict-action').val('active');
+                        $btn.closest('tr').removeClass('jetstrike-cd-row-resolved');
+                    } else {
+                        $btn.prop('disabled', false).html(
+                            '<span class="dashicons dashicons-undo"></span> Revert'
+                        );
+                        JetstrikeCD.showNotice('error', response.data.message);
+                    }
+                },
+                error: function () {
+                    $btn.prop('disabled', false).html(
+                        '<span class="dashicons dashicons-undo"></span> Revert'
+                    );
+                    JetstrikeCD.showNotice('error', 'Revert failed. Please try again.');
                 }
             });
         },

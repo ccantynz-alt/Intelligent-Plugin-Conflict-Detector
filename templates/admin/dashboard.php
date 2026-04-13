@@ -144,6 +144,7 @@ $grade_color = $grade_colors[$health['grade']] ?? '#6c757d';
                     <th><?php esc_html_e('Type', 'jetstrike-cd'); ?></th>
                     <th><?php esc_html_e('Description', 'jetstrike-cd'); ?></th>
                     <th><?php esc_html_e('Plugins', 'jetstrike-cd'); ?></th>
+                    <th><?php esc_html_e('Auto-Fix', 'jetstrike-cd'); ?></th>
                     <th><?php esc_html_e('Actions', 'jetstrike-cd'); ?></th>
                 </tr>
             </thead>
@@ -166,6 +167,23 @@ $grade_color = $grade_colors[$health['grade']] ?? '#6c757d';
                         <code><?php echo esc_html(dirname($conflict->plugin_a)); ?></code>
                         <?php if ($conflict->plugin_b): ?>
                             <br>vs <code><?php echo esc_html(dirname($conflict->plugin_b)); ?></code>
+                        <?php endif; ?>
+                    </td>
+                    <td class="jetstrike-cd-autofix-cell">
+                        <?php
+                        $can_fix = \Jetstrike\ConflictDetector\Resolver\AutoResolver::can_auto_resolve($conflict->conflict_type);
+                        if ($can_fix['can_resolve']): ?>
+                            <button type="button"
+                                class="button button-small jetstrike-cd-autofix-btn"
+                                data-conflict-id="<?php echo (int) $conflict->id; ?>"
+                                title="<?php echo esc_attr($can_fix['description']); ?>">
+                                <span class="dashicons dashicons-admin-generic"></span>
+                                <?php esc_html_e('Auto-Fix', 'jetstrike-cd'); ?>
+                            </button>
+                        <?php else: ?>
+                            <span class="jetstrike-cd-no-fix" title="<?php echo esc_attr($can_fix['description']); ?>">
+                                &mdash;
+                            </span>
                         <?php endif; ?>
                     </td>
                     <td>
@@ -209,11 +227,14 @@ $grade_color = $grade_colors[$health['grade']] ?? '#6c757d';
             <h3><?php esc_html_e('Upgrade to Pro', 'jetstrike-cd'); ?></h3>
             <p><?php esc_html_e('Unlock automated background scans, pre-update testing, WooCommerce deep analysis, email alerts, and more.', 'jetstrike-cd'); ?></p>
             <ul>
+                <li><?php esc_html_e('One-Click Auto-Fix — automatically resolve conflicts', 'jetstrike-cd'); ?></li>
                 <li><?php esc_html_e('Automated background scanning', 'jetstrike-cd'); ?></li>
                 <li><?php esc_html_e('Pre-update conflict simulation', 'jetstrike-cd'); ?></li>
                 <li><?php esc_html_e('WooCommerce checkout/payment analysis', 'jetstrike-cd'); ?></li>
+                <li><?php esc_html_e('PHP library dependency conflict detection', 'jetstrike-cd'); ?></li>
+                <li><?php esc_html_e('JavaScript deep analysis', 'jetstrike-cd'); ?></li>
+                <li><?php esc_html_e('WP-CLI integration for CI/CD pipelines', 'jetstrike-cd'); ?></li>
                 <li><?php esc_html_e('Email conflict alerts', 'jetstrike-cd'); ?></li>
-                <li><?php esc_html_e('50 scan history retention', 'jetstrike-cd'); ?></li>
             </ul>
             <a href="https://jetstrike.io/pricing" class="button button-primary" target="_blank" rel="noopener">
                 <?php esc_html_e('Upgrade — $79/year', 'jetstrike-cd'); ?>

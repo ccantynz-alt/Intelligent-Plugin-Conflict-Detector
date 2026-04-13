@@ -330,6 +330,39 @@ final class ScanQueue {
             case 'performance_degradation':
                 return 'This plugin significantly impacts site performance. Consider finding a lighter alternative, or enable caching to mitigate the impact.';
 
+            case 'dependency_conflict':
+                return 'Both plugins bundle different versions of the same PHP library. Contact the newer plugin\'s author to use PHP-Scoper or Strauss for dependency isolation. As a Pro user, you can use Auto-Fix to attempt automatic resolution.';
+
+            case 'js_global_conflict':
+                return 'Both plugins define the same JavaScript global variable. One will silently overwrite the other. Contact the plugin authors to namespace their JS code.';
+
+            case 'js_jquery_override':
+                return 'This plugin overrides WordPress\'s bundled jQuery, which breaks other plugins and the block editor. Contact the plugin author or use Auto-Fix to restore the default jQuery.';
+
+            case 'js_prototype_pollution':
+                return 'This plugin modifies built-in JavaScript prototypes, which can cause unpredictable behavior across all frontend code. Contact the plugin author.';
+
+            case 'js_localize_collision':
+                return 'Both plugins inject data using the same JavaScript variable name via wp_localize_script. The last plugin loaded wins. Contact one author to rename their variable.';
+
+            case 'db_table_collision':
+                return 'Both plugins create the same database table. This will cause installation failures or data corruption. Deactivate one plugin immediately.';
+
+            case 'db_option_collision':
+                return 'Both plugins use the same wp_options key. Data may be silently overwritten. Contact the plugin authors to prefix their option names.';
+
+            case 'db_cron_collision':
+                return 'Both plugins register the same WP-Cron hook name. Only one scheduled task will execute. Contact the authors to use unique hook names.';
+
+            case 'db_cpt_collision':
+                return 'Both plugins register the same custom post type slug. This causes a fatal error. Deactivate one plugin immediately.';
+
+            case 'db_taxonomy_collision':
+                return 'Both plugins register the same taxonomy slug. Only the last-registered taxonomy will work correctly.';
+
+            case 'db_meta_collision':
+                return 'Both plugins use the same post meta key with potentially different data formats. This may cause data corruption.';
+
             default:
                 return 'Review the technical details and test your site thoroughly with these plugins active.';
         }

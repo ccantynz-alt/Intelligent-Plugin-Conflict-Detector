@@ -14,6 +14,9 @@ use Jetstrike\ConflictDetector\Analyzer\HookAnalyzer;
 use Jetstrike\ConflictDetector\Analyzer\ResourceAnalyzer;
 use Jetstrike\ConflictDetector\Analyzer\PerformanceAnalyzer;
 use Jetstrike\ConflictDetector\Analyzer\WooCommerceAnalyzer;
+use Jetstrike\ConflictDetector\Analyzer\DependencyAnalyzer;
+use Jetstrike\ConflictDetector\Analyzer\JavaScriptAnalyzer;
+use Jetstrike\ConflictDetector\Analyzer\DatabaseAnalyzer;
 use Jetstrike\ConflictDetector\Database\Repository;
 use Jetstrike\ConflictDetector\Subscription\FeatureFlags;
 
@@ -85,6 +88,18 @@ final class ScanEngine {
             $woo = new WooCommerceAnalyzer();
             $conflicts = array_merge($conflicts, $woo->analyze($plugins));
         }
+
+        // 5. Dependency version conflict analysis (bundled PHP libraries).
+        $deps = new DependencyAnalyzer();
+        $conflicts = array_merge($conflicts, $deps->analyze($plugins));
+
+        // 6. JavaScript conflict analysis (globals, jQuery, prototypes).
+        $js = new JavaScriptAnalyzer();
+        $conflicts = array_merge($conflicts, $js->analyze($plugins));
+
+        // 7. Database conflict analysis (tables, options, cron, CPTs).
+        $db = new DatabaseAnalyzer();
+        $conflicts = array_merge($conflicts, $db->analyze($plugins));
 
         return $conflicts;
     }

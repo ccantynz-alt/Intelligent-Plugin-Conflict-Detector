@@ -48,7 +48,10 @@ jetstrike-conflict-detector/
 │   │   ├── HookAnalyzer.php           # WordPress hook/filter analysis
 │   │   ├── ResourceAnalyzer.php       # JS/CSS/global collision detection
 │   │   ├── PerformanceAnalyzer.php    # Performance impact scoring
-│   │   └── WooCommerceAnalyzer.php    # WooCommerce-specific rules
+│   │   ├── WooCommerceAnalyzer.php    # WooCommerce-specific rules
+│   │   ├── DependencyAnalyzer.php     # Bundled PHP library version conflicts
+│   │   ├── JavaScriptAnalyzer.php     # JS global/prototype/jQuery conflicts
+│   │   └── DatabaseAnalyzer.php       # Option/cron/CPT/table collisions
 │   ├── Monitor/
 │   │   ├── BackgroundMonitor.php      # WP-Cron scheduled scanning
 │   │   ├── UpdateWatcher.php          # Plugin update detection
@@ -59,6 +62,13 @@ jetstrike-conflict-detector/
 │   │   ├── NotificationManager.php    # Notification orchestrator
 │   │   ├── EmailNotifier.php          # Email alerts
 │   │   └── SlackNotifier.php          # Slack webhook integration
+│   ├── Resolver/
+│   │   ├── AutoResolver.php           # Auto-fix orchestrator
+│   │   ├── HookPriorityResolver.php   # Hook priority adjustment patches
+│   │   ├── ScriptResolver.php         # Duplicate script/style dequeue
+│   │   └── CompatibilityPatch.php     # mu-plugin patch file generator
+│   ├── CLI/
+│   │   └── Commands.php               # WP-CLI integration
 │   ├── Database/
 │   │   ├── Migrator.php               # Schema versioning & migrations
 │   │   └── Repository.php             # Data access layer
@@ -96,7 +106,7 @@ Two custom tables prefixed with `{wpdb->prefix}jetstrike_`:
 | scan_id | BIGINT UNSIGNED | FK to scans table |
 | plugin_a | VARCHAR(255) | First plugin file path |
 | plugin_b | VARCHAR(255) | Second plugin file path |
-| conflict_type | VARCHAR(50) | 'fatal_error', 'hook_conflict', 'resource_collision', 'function_redeclaration', 'class_collision', 'global_conflict', 'performance_degradation' |
+| conflict_type | VARCHAR(50) | 'fatal_error', 'hook_conflict', 'resource_collision', 'function_redeclaration', 'class_collision', 'global_conflict', 'performance_degradation', 'dependency_conflict', 'js_global_conflict', 'js_jquery_override', 'js_prototype_pollution', 'js_localize_collision', 'db_table_collision', 'db_option_collision', 'db_cron_collision', 'db_cpt_collision', 'db_taxonomy_collision', 'db_meta_collision' |
 | severity | VARCHAR(20) | 'critical', 'high', 'medium', 'low' |
 | description | TEXT | Human-readable conflict description |
 | technical_details | LONGTEXT | JSON with stack traces, hook names, etc. |
@@ -163,7 +173,107 @@ Two custom tables prefixed with `{wpdb->prefix}jetstrike_`:
 - HPOS (High-Performance Order Storage) compatibility checks
 - Checkout Block vs Classic Checkout conflicts
 
-### 7. REST API Endpoints (LOCKED)
+### 7. Auto-Fix Engine (LOCKED)
+
+The single biggest differentiator — no other WordPress tool can automatically resolve conflicts.
+
+**Architecture:**
+- All patches are generated as mu-plugin files in `wp-content/mu-plugins/jetstrike-patches/`
+- A loader mu-plugin (`jetstrike-patch-loader.php`) includes all patches automatically
+- Each patch is individually reversible with one click
+- Patches load before regular plugins (mu-plugin loading order)
+
+**Resolution Strategies:**
+
+| Conflict Type | Fix Method | How It Works |
+|---------------|-----------|--------------|
+| Hook conflict | Priority adjustment | Moves one plugin's callback to a non-conflicting priority via reflection |
+| Resource collision | Script/style dequeue | Dequeues the duplicate handle, keeping the first-loaded version |
+| Function redeclaration | Function guard | Custom error handler suppresses "Cannot redeclare" fatal errors |
+| Global conflict | Variable isolation | Snapshot/restore pattern so each plugin sees its own copy of the global |
+
+**AJAX Endpoints:**
+- `jetstrike_cd_auto_fix` — Apply auto-fix for a conflict
+- `jetstrike_cd_revert_fix` — Revert a previously applied fix
+
+### 8. Dependency Version Analyzer (LOCKED)
+
+Detects when multiple plugins bundle incompatible versions of the same PHP library.
+
+**Known Libraries Tracked:**
+- guzzlehttp/guzzle, monolog/monolog, nesbot/carbon
+- symfony/http-foundation, symfony/console
+- league/container, league/csv
+- stripe/stripe-php, firebase/php-jwt
+- phpmailer/phpmailer, psr/log, psr/container, pelago/emogrifier
+
+**Detection Methods:**
+- Directory pattern matching (vendor/lib-name, lib/lib-name, includes/lib-name)
+- Version extraction from class constants and composer.json
+- Namespace prefix detection (php-scoper/strauss = safe, unprefixed = conflict)
+- composer.lock parsing for locked dependency versions
+- Major version divergence flagged as critical, minor as medium
+
+### 9. JavaScript Conflict Analyzer (LOCKED)
+
+No other WordPress tool analyzes JavaScript for conflicts.
+
+**Detects:**
+- Global namespace pollution (`window.X = ...`, top-level `var X = ...`)
+- jQuery version overrides (deregistering WordPress's bundled jQuery)
+- Prototype pollution (`Array.prototype.x = ...` etc.)
+- `wp_localize_script` variable name collisions
+- `wp_add_inline_script` global variable conflicts
+
+**Approach:**
+- Recursively scans plugin JS files (skips node_modules, vendor minified)
+- Strips comments before analysis to reduce false positives
+- Cross-references globals across plugins for collisions
+- Maintains SAFE_GLOBALS whitelist (jQuery, wp, lodash, React, etc.)
+
+### 10. Database Conflict Analyzer (LOCKED)
+
+Detects database-level conflicts that cause silent data corruption.
+
+**Detects:**
+- Custom table name collisions (CREATE TABLE with same name)
+- wp_options key collisions (same option name from different plugins)
+- WP-Cron hook collisions (same hook name for different scheduled tasks)
+- Custom post type slug conflicts (same CPT slug from different plugins)
+- Taxonomy slug conflicts
+- Transient key collisions
+- Post meta key conflicts
+
+**Approach:**
+- Regex-based extraction from PHP source files
+- Cross-references all extracted names across plugin boundaries
+- Filters out WordPress core options and plugin-prefixed names (reduce noise)
+- Recursive scanning with depth limits and file count safety caps
+
+### 11. WP-CLI Integration (LOCKED)
+
+Full command-line interface for professional developers and CI/CD pipelines.
+
+**Commands:**
+```
+wp jetstrike scan [--type=<quick|full|targeted>] [--target=<plugin>] [--format=<table|json|csv|count>]
+wp jetstrike conflicts [--severity=<level>] [--status=<status>] [--format=<format>]
+wp jetstrike fix <conflict_id> [--dry-run]
+wp jetstrike revert <conflict_id>
+wp jetstrike patches [--format=<format>]
+wp jetstrike status
+wp jetstrike health
+wp jetstrike reset [--yes]
+```
+
+**CI/CD Integration:**
+- `wp jetstrike scan --format=json` outputs machine-readable JSON
+- `wp jetstrike scan --format=count` returns just the conflict count (exit code friendly)
+- `wp jetstrike conflicts --severity=critical --format=count` for threshold-based CI gates
+- All scan results stored in database with `triggered_by: cli`
+
+### 12. REST API Endpoints (LOCKED)
+
 
 All under namespace `jetstrike/v1`:
 
@@ -180,7 +290,7 @@ All under namespace `jetstrike/v1`:
 | POST | `/settings` | Update scanner settings |
 | GET | `/settings` | Get scanner settings |
 
-### 8. Subscription Tiers (LOCKED)
+### 13. Subscription Tiers (LOCKED)
 
 | Feature | Free | Pro ($79/yr) | Agency ($199/yr) |
 |---------|------|-------------|-----------------|
@@ -189,6 +299,11 @@ All under namespace `jetstrike/v1`:
 | Automated Background Scans | No | Yes | Yes |
 | Pre-Update Simulation | No | Yes | Yes |
 | WooCommerce Deep Analysis | No | Yes | Yes |
+| **Auto-Fix Engine** | No | **Yes** | **Yes** |
+| **Dependency Version Analysis** | No | **Yes** | **Yes** |
+| **JavaScript Deep Analysis** | No | **Yes** | **Yes** |
+| **Database Conflict Analysis** | No | **Yes** | **Yes** |
+| **WP-CLI Integration** | No | **Yes** | **Yes** |
 | Email Alerts | No | Yes | Yes |
 | Slack Integration | No | No | Yes |
 | REST API Access | No | No | Yes |
@@ -197,7 +312,7 @@ All under namespace `jetstrike/v1`:
 | Performance Scoring | Basic | Advanced | Advanced |
 | Priority Support | No | Yes | Yes |
 
-### 9. Coding Standards (LOCKED)
+### 14. Coding Standards (LOCKED)
 
 - Follow WordPress Coding Standards for PHP
 - Use strict typing: `declare(strict_types=1)` in all files
@@ -210,7 +325,7 @@ All under namespace `jetstrike/v1`:
 - Capability checks (`current_user_can('manage_options')`) on all admin actions
 - REST API uses `permission_callback` on every route
 
-### 10. Performance Constraints (LOCKED)
+### 15. Performance Constraints (LOCKED)
 
 - Quick scan must complete in < 30 seconds for 30 plugins
 - Full scan processes max 5 plugin pairs per cron tick (to avoid timeouts)
@@ -233,6 +348,12 @@ All under namespace `jetstrike/v1`:
 10. License Manager + Feature Flags
 11. Admin Dashboard (PHP templates + CSS + JS)
 12. Health Monitor
+13. Security hardening + Freemius SDK integration
+14. Cloud Intelligence layer (Telemetry + ConflictIntelligence)
+15. Auto-Fix Engine (AutoResolver + HookPriorityResolver + ScriptResolver + CompatibilityPatch)
+16. Dependency Analyzer + JavaScript Analyzer + Database Analyzer
+17. WP-CLI Commands
+18. Landing page (site/index.html)
 
 ## Git Strategy
 
