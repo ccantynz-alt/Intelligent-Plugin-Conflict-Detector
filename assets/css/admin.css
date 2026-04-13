@@ -1,0 +1,398 @@
+/**
+ * Admin styles for Intelligent Plugin Conflict Detector.
+ *
+ * @package IntelligentPluginConflictDetector
+ */
+
+/* General Layout */
+.ipcd-wrap {
+	max-width: 1200px;
+}
+
+.ipcd-page-title {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 20px;
+}
+
+.ipcd-page-title .dashicons {
+	font-size: 28px;
+	width: 28px;
+	height: 28px;
+	color: #d63638;
+}
+
+/* Navigation Tabs */
+.ipcd-nav-tabs {
+	display: flex;
+	border-bottom: 1px solid #c3c4c7;
+	margin-bottom: 20px;
+	gap: 0;
+}
+
+.ipcd-nav-tab {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	padding: 10px 16px;
+	text-decoration: none;
+	color: #50575e;
+	border: 1px solid transparent;
+	border-bottom: none;
+	margin-bottom: -1px;
+	background: transparent;
+	font-size: 14px;
+	transition: color 0.2s, background 0.2s;
+}
+
+.ipcd-nav-tab:hover {
+	color: #2271b1;
+	background: #f0f0f1;
+}
+
+.ipcd-nav-tab-active {
+	color: #1d2327;
+	background: #fff;
+	border-color: #c3c4c7;
+	font-weight: 600;
+}
+
+.ipcd-nav-tab .dashicons {
+	font-size: 16px;
+	width: 16px;
+	height: 16px;
+}
+
+/* Statistics Grid */
+.ipcd-stats-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: 16px;
+	margin-bottom: 24px;
+}
+
+.ipcd-stat-card {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	padding: 20px;
+	text-align: center;
+	transition: box-shadow 0.2s;
+}
+
+.ipcd-stat-card:hover {
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.ipcd-stat-icon .dashicons {
+	font-size: 32px;
+	width: 32px;
+	height: 32px;
+	margin-bottom: 8px;
+}
+
+.ipcd-stat-total .ipcd-stat-icon .dashicons {
+	color: #2271b1;
+}
+
+.ipcd-stat-active .ipcd-stat-icon .dashicons {
+	color: #dba617;
+}
+
+.ipcd-stat-critical .ipcd-stat-icon .dashicons {
+	color: #d63638;
+}
+
+.ipcd-stat-resolved .ipcd-stat-icon .dashicons {
+	color: #00a32a;
+}
+
+.ipcd-stat-number {
+	font-size: 36px;
+	font-weight: 700;
+	line-height: 1.2;
+	color: #1d2327;
+}
+
+.ipcd-stat-label {
+	font-size: 13px;
+	color: #646970;
+	margin-top: 4px;
+}
+
+/* Actions Bar */
+.ipcd-actions-bar {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin-bottom: 20px;
+	padding: 16px;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+}
+
+.ipcd-btn-scan {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.ipcd-btn-scan .dashicons {
+	font-size: 16px;
+	width: 16px;
+	height: 16px;
+}
+
+.ipcd-btn-scan:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.ipcd-scan-status {
+	font-style: italic;
+	color: #646970;
+}
+
+.ipcd-scan-status.ipcd-status-running {
+	color: #2271b1;
+}
+
+.ipcd-scan-status.ipcd-status-success {
+	color: #00a32a;
+}
+
+.ipcd-scan-status.ipcd-status-error {
+	color: #d63638;
+}
+
+/* Info Bar */
+.ipcd-info-bar {
+	display: flex;
+	gap: 24px;
+	margin-bottom: 20px;
+	padding: 12px 16px;
+	background: #f6f7f7;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	font-size: 13px;
+	color: #646970;
+}
+
+/* Severity Badges */
+.ipcd-severity {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 3px;
+	font-size: 12px;
+	font-weight: 600;
+	text-transform: uppercase;
+}
+
+.ipcd-severity-critical {
+	background: #d63638;
+	color: #fff;
+}
+
+.ipcd-severity-high {
+	background: #dba617;
+	color: #fff;
+}
+
+.ipcd-severity-medium {
+	background: #72aee6;
+	color: #fff;
+}
+
+.ipcd-severity-low {
+	background: #8c8f94;
+	color: #fff;
+}
+
+/* Conflict Type Badges */
+.ipcd-conflict-type {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 3px;
+	font-size: 11px;
+	background: #f0f0f1;
+	color: #50575e;
+	border: 1px solid #c3c4c7;
+}
+
+/* Status Badges */
+.ipcd-status-badge {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 3px;
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.ipcd-status-active {
+	background: #fcf0f1;
+	color: #d63638;
+	border: 1px solid #d63638;
+}
+
+.ipcd-status-resolved {
+	background: #edfaef;
+	color: #00a32a;
+	border: 1px solid #00a32a;
+}
+
+.ipcd-status-running {
+	background: #f0f6fc;
+	color: #2271b1;
+	border: 1px solid #2271b1;
+}
+
+.ipcd-status-completed {
+	background: #edfaef;
+	color: #00a32a;
+	border: 1px solid #00a32a;
+}
+
+.ipcd-status-pending {
+	background: #f6f7f7;
+	color: #8c8f94;
+	border: 1px solid #c3c4c7;
+}
+
+/* Table Enhancements */
+.ipcd-col-severity {
+	width: 90px;
+}
+
+.ipcd-col-type {
+	width: 130px;
+}
+
+.ipcd-col-date {
+	width: 140px;
+}
+
+.ipcd-col-status {
+	width: 90px;
+}
+
+.ipcd-col-actions {
+	width: 100px;
+}
+
+.ipcd-loading {
+	text-align: center;
+	color: #646970;
+	font-style: italic;
+	padding: 20px;
+}
+
+.ipcd-no-data {
+	text-align: center;
+	color: #646970;
+	padding: 40px 20px;
+}
+
+.ipcd-error-message {
+	max-width: 300px;
+	word-break: break-word;
+	font-size: 12px;
+}
+
+/* Filters */
+.ipcd-filters {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin-bottom: 16px;
+	padding: 12px 16px;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+}
+
+.ipcd-filters label {
+	font-weight: 600;
+	font-size: 13px;
+}
+
+.ipcd-filters select {
+	min-width: 120px;
+}
+
+/* Pagination */
+.ipcd-pagination {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	margin-top: 16px;
+}
+
+.ipcd-pagination .button {
+	min-width: 36px;
+	text-align: center;
+}
+
+.ipcd-pagination .ipcd-page-current {
+	font-weight: 700;
+	color: #2271b1;
+}
+
+/* Settings Form */
+.ipcd-settings-form .form-table th {
+	width: 200px;
+}
+
+.ipcd-settings-status {
+	margin-left: 12px;
+	font-style: italic;
+}
+
+.ipcd-settings-status.ipcd-status-success {
+	color: #00a32a;
+}
+
+.ipcd-settings-status.ipcd-status-error {
+	color: #d63638;
+}
+
+/* Resolve Button */
+.ipcd-btn-resolve {
+	font-size: 12px;
+}
+
+.ipcd-btn-resolve:disabled {
+	opacity: 0.5;
+}
+
+/* Responsive */
+@media screen and (max-width: 782px) {
+	.ipcd-stats-grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.ipcd-actions-bar {
+		flex-wrap: wrap;
+	}
+
+	.ipcd-info-bar {
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	.ipcd-filters {
+		flex-wrap: wrap;
+	}
+}
+
+@media screen and (max-width: 480px) {
+	.ipcd-stats-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.ipcd-nav-tabs {
+		flex-wrap: wrap;
+	}
+}
