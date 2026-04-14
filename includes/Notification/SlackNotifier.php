@@ -58,8 +58,8 @@ final class SlackNotifier {
         foreach (array_slice($conflicts, 0, 3) as $conflict) {
             $top_conflicts .= sprintf(
                 "- [%s] %s\n",
-                strtoupper($conflict->severity ?? 'medium'),
-                $conflict->description ?? 'Unknown conflict'
+                strtoupper(sanitize_text_field($conflict->severity ?? 'medium')),
+                sanitize_text_field($conflict->description ?? 'Unknown conflict')
             );
         }
 

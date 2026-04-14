@@ -11,6 +11,7 @@ namespace Jetstrike\ConflictDetector\Admin;
 
 use Jetstrike\ConflictDetector\Database\Repository;
 use Jetstrike\ConflictDetector\Scanner\ScanQueue;
+use Jetstrike\ConflictDetector\Resolver\AutoResolver;
 use Jetstrike\ConflictDetector\Subscription\FeatureFlags;
 
 final class AdminAjax {
@@ -30,6 +31,8 @@ final class AdminAjax {
         add_action('wp_ajax_jetstrike_cd_scan_status', [$this, 'scan_status']);
         add_action('wp_ajax_jetstrike_cd_cancel_scan', [$this, 'cancel_scan']);
         add_action('wp_ajax_jetstrike_cd_update_conflict', [$this, 'update_conflict_status']);
+        add_action('wp_ajax_jetstrike_cd_auto_fix', [$this, 'auto_fix_conflict']);
+        add_action('wp_ajax_jetstrike_cd_revert_fix', [$this, 'revert_fix']);
         add_action('wp_ajax_jetstrike_cd_activate_license', [$this, 'activate_license']);
         add_action('wp_ajax_jetstrike_cd_deactivate_license', [$this, 'deactivate_license']);
     }
@@ -122,6 +125,8 @@ final class AdminAjax {
         if ($scan->status === 'completed') {
             $conflicts = $this->repository->get_conflicts_for_scan($scan_id);
             $data['conflicts'] = array_map(function ($c) {
+                $can_fix = AutoResolver::can_auto_resolve($c->conflict_type);
+
                 return [
                     'id'             => (int) $c->id,
                     'plugin_a'       => $c->plugin_a,
@@ -130,6 +135,8 @@ final class AdminAjax {
                     'severity'       => $c->severity,
                     'description'    => $c->description,
                     'recommendation' => $c->recommendation,
+                    'can_auto_fix'   => $can_fix['can_resolve'],
+                    'fix_description' => $can_fix['description'],
                 ];
             }, $conflicts);
         }
@@ -176,6 +183,71 @@ final class AdminAjax {
         delete_transient('jetstrike_cd_conflict_summary');
 
         wp_send_json_success(['updated' => true]);
+    }
+
+    /**
+     * Auto-fix a conflict.
+     */
+    public function auto_fix_conflict(): void {
+        $this->verify_request();
+
+        $conflict_id = (int) ($_POST['conflict_id'] ?? 0);
+
+        if ($conflict_id <= 0) {
+            wp_send_json_error(['message' => __('Invalid conflict ID.', 'jetstrike-cd')]);
+        }
+
+        if (! FeatureFlags::can('auto_fix')) {
+            wp_send_json_error([
+                'message' => __('Auto-Fix requires a Pro or Agency plan. Upgrade to unlock automatic conflict resolution.', 'jetstrike-cd'),
+            ]);
+        }
+
+        $resolver = new AutoResolver($this->repository);
+        $result = $resolver->resolve($conflict_id);
+
+        if ($result['success']) {
+            delete_transient('jetstrike_cd_conflict_summary');
+
+            wp_send_json_success([
+                'message'    => $result['message'],
+                'method'     => $result['method'],
+                'patch_file' => $result['patch_file'],
+            ]);
+        } else {
+            wp_send_json_error([
+                'message' => $result['message'],
+                'method'  => $result['method'],
+            ]);
+        }
+    }
+
+    /**
+     * Revert an auto-fix.
+     */
+    public function revert_fix(): void {
+        $this->verify_request();
+
+        $conflict_id = (int) ($_POST['conflict_id'] ?? 0);
+
+        if ($conflict_id <= 0) {
+            wp_send_json_error(['message' => __('Invalid conflict ID.', 'jetstrike-cd')]);
+        }
+
+        $resolver = new AutoResolver($this->repository);
+        $reverted = $resolver->revert($conflict_id);
+
+        if ($reverted) {
+            delete_transient('jetstrike_cd_conflict_summary');
+
+            wp_send_json_success([
+                'message' => __('Auto-fix has been reverted. The conflict is now active again.', 'jetstrike-cd'),
+            ]);
+        } else {
+            wp_send_json_error([
+                'message' => __('No auto-fix found for this conflict.', 'jetstrike-cd'),
+            ]);
+        }
     }
 
     /**

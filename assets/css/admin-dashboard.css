@@ -465,3 +465,74 @@
 @keyframes jetstrike-spin {
     to { transform: rotate(360deg); }
 }
+
+/* ── Auto-Fix ─────────────────────────────────────────────── */
+
+.jetstrike-cd-autofix-btn {
+    background: #2271b1;
+    border-color: #2271b1;
+    color: #fff;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.jetstrike-cd-autofix-btn:hover,
+.jetstrike-cd-autofix-btn:focus {
+    background: #135e96;
+    border-color: #135e96;
+    color: #fff;
+}
+
+.jetstrike-cd-autofix-btn .dashicons {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    vertical-align: middle;
+    margin-right: 2px;
+    margin-top: -1px;
+}
+
+.jetstrike-cd-revert-btn {
+    color: #b32d2e;
+    border-color: #b32d2e;
+}
+
+.jetstrike-cd-revert-btn:hover,
+.jetstrike-cd-revert-btn:focus {
+    background: #b32d2e;
+    color: #fff;
+}
+
+.jetstrike-cd-revert-btn .dashicons {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    vertical-align: middle;
+    margin-right: 2px;
+    margin-top: -1px;
+}
+
+.jetstrike-cd-no-fix {
+    color: #999;
+    cursor: help;
+}
+
+.jetstrike-cd-row-resolved {
+    opacity: 0.6;
+    background: #f0fdf4 !important;
+}
+
+.jetstrike-cd-row-resolved td {
+    text-decoration: line-through;
+    text-decoration-color: #999;
+}
+
+.jetstrike-cd-row-resolved .jetstrike-cd-autofix-cell,
+.jetstrike-cd-row-resolved .jetstrike-cd-badge {
+    text-decoration: none;
+}
+
+.jetstrike-cd-autofix-cell {
+    text-align: center;
+    white-space: nowrap;
+}

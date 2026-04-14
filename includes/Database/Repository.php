@@ -142,7 +142,10 @@ final class Repository {
      */
     public function get_latest_scan(): ?object {
         $result = $this->wpdb->get_row(
-            "SELECT * FROM {$this->scans_table} WHERE status = 'completed' ORDER BY completed_at DESC LIMIT 1"
+            $this->wpdb->prepare(
+                "SELECT * FROM {$this->scans_table} WHERE status = %s ORDER BY completed_at DESC LIMIT 1",
+                'completed'
+            )
         );
 
         return $result ?: null;
@@ -155,7 +158,11 @@ final class Repository {
      */
     public function has_running_scan(): bool {
         $count = (int) $this->wpdb->get_var(
-            "SELECT COUNT(*) FROM {$this->scans_table} WHERE status IN ('queued', 'running')"
+            $this->wpdb->prepare(
+                "SELECT COUNT(*) FROM {$this->scans_table} WHERE status IN (%s, %s)",
+                'queued',
+                'running'
+            )
         );
 
         return $count > 0;
@@ -243,7 +250,10 @@ final class Repository {
      */
     public function list_active_conflicts(int $page = 1, int $per_page = 50): array {
         $total = (int) $this->wpdb->get_var(
-            "SELECT COUNT(*) FROM {$this->conflicts_table} WHERE status = 'active'"
+            $this->wpdb->prepare(
+                "SELECT COUNT(*) FROM {$this->conflicts_table} WHERE status = %s",
+                'active'
+            )
         );
 
         $offset = ($page - 1) * $per_page;
@@ -277,7 +287,10 @@ final class Repository {
      */
     public function get_conflict_summary(): array {
         $results = $this->wpdb->get_results(
-            "SELECT severity, COUNT(*) as count FROM {$this->conflicts_table} WHERE status = 'active' GROUP BY severity"
+            $this->wpdb->prepare(
+                "SELECT severity, COUNT(*) as count FROM {$this->conflicts_table} WHERE status = %s GROUP BY severity",
+                'active'
+            )
         );
 
         $summary = [

@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jetstrike - Intelligent Plugin Conflict Detector for WordPress &amp; WooCommerce</title>
+    <meta name="description" content="Automatically detect and prevent plugin conflicts before they break your store. The most advanced conflict detection for WordPress and WooCommerce.">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --dark: #0f172a;
+            --gray: #64748b;
+            --light: #f8fafc;
+            --border: #e2e8f0;
+            --critical: #ef4444;
+            --warning: #f59e0b;
+            --success: #22c55e;
+            --radius: 12px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, sans-serif;
+            color: var(--dark);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container { max-width: 1140px; margin: 0 auto; padding: 0 24px; }
+
+        /* ── Nav ─────────────────────────────────── */
+        nav {
+            padding: 16px 0;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+        }
+
+        nav .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--dark);
+            text-decoration: none;
+            letter-spacing: -0.5px;
+        }
+
+        .logo span { color: var(--primary); }
+
+        .nav-links { display: flex; align-items: center; gap: 32px; }
+        .nav-links a { color: var(--gray); text-decoration: none; font-size: 15px; font-weight: 500; }
+        .nav-links a:hover { color: var(--dark); }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
+        .btn-outline { border: 2px solid var(--border); color: var(--dark); background: #fff; }
+        .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+        .btn-large { padding: 14px 36px; font-size: 17px; border-radius: 10px; }
+
+        /* ── Hero ────────────────────────────────── */
+        .hero {
+            padding: 100px 0 80px;
+            text-align: center;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            background: #eff6ff;
+            color: var(--primary);
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+
+        .hero h1 {
+            font-size: clamp(36px, 5vw, 56px);
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -1.5px;
+            margin-bottom: 20px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero p {
+            font-size: 19px;
+            color: var(--gray);
+            max-width: 600px;
+            margin: 0 auto 36px;
+            line-height: 1.7;
+        }
+
+        .hero-buttons { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 48px;
+            margin-top: 60px;
+            padding-top: 40px;
+            border-top: 1px solid var(--border);
+        }
+
+        .hero-stat { text-align: center; }
+        .hero-stat-number { font-size: 32px; font-weight: 800; color: var(--dark); }
+        .hero-stat-label { font-size: 14px; color: var(--gray); margin-top: 4px; }
+
+        /* ── Problem ─────────────────────────────── */
+        .problem {
+            padding: 80px 0;
+            background: var(--dark);
+            color: #fff;
+        }
+
+        .problem h2 { font-size: 36px; font-weight: 700; margin-bottom: 16px; text-align: center; }
+        .problem > .container > p { color: #94a3b8; text-align: center; font-size: 18px; margin-bottom: 48px; max-width: 600px; margin-left: auto; margin-right: auto; }
+
+        .problem-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        .problem-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: var(--radius);
+            padding: 28px;
+        }
+
+        .problem-card .icon { font-size: 32px; margin-bottom: 16px; }
+        .problem-card h3 { font-size: 18px; margin-bottom: 8px; }
+        .problem-card p { color: #94a3b8; font-size: 15px; }
+
+        /* ── Features ────────────────────────────── */
+        .features { padding: 100px 0; }
+        .features h2 { font-size: 36px; font-weight: 700; text-align: center; margin-bottom: 16px; }
+        .features > .container > p { color: var(--gray); text-align: center; font-size: 18px; margin-bottom: 60px; }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+        }
+
+        .feature-card {
+            padding: 32px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            transition: all 0.2s;
+        }
+
+        .feature-card:hover { border-color: var(--primary); box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
+        .feature-card .icon { font-size: 28px; margin-bottom: 16px; display: block; }
+        .feature-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+        .feature-card p { color: var(--gray); font-size: 15px; line-height: 1.6; }
+
+        .feature-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 12px;
+        }
+
+        .feature-badge--pro { background: #eff6ff; color: var(--primary); }
+        .feature-badge--agency { background: #f5f3ff; color: #7c3aed; }
+
+        /* ── Pricing ─────────────────────────────── */
+        .pricing {
+            padding: 100px 0;
+            background: var(--light);
+        }
+
+        .pricing h2 { font-size: 36px; font-weight: 700; text-align: center; margin-bottom: 16px; }
+        .pricing > .container > p { color: var(--gray); text-align: center; font-size: 18px; margin-bottom: 60px; }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            align-items: start;
+        }
+
+        .price-card {
+            background: #fff;
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            padding: 36px;
+            position: relative;
+        }
+
+        .price-card--popular {
+            border-color: var(--primary);
+            transform: scale(1.04);
+            box-shadow: 0 8px 32px rgba(37,99,235,0.12);
+        }
+
+        .price-card--popular::before {
+            content: 'Most Popular';
+            position: absolute;
+            top: -14px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary);
+            color: #fff;
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .price-card h3 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+        .price-card .price { font-size: 48px; font-weight: 800; margin: 16px 0; letter-spacing: -2px; }
+        .price-card .price span { font-size: 16px; color: var(--gray); font-weight: 400; letter-spacing: 0; }
+        .price-card .price-desc { color: var(--gray); font-size: 15px; margin-bottom: 24px; }
+
+        .price-card ul { list-style: none; margin-bottom: 28px; }
+        .price-card li { padding: 8px 0; font-size: 15px; padding-left: 28px; position: relative; }
+        .price-card li::before { content: "\2713"; position: absolute; left: 0; color: var(--success); font-weight: 700; }
+        .price-card li.disabled { color: #cbd5e1; }
+        .price-card li.disabled::before { content: "\2717"; color: #cbd5e1; }
+
+        .price-card .btn { width: 100%; justify-content: center; }
+
+        /* ── WooCommerce ─────────────────────────── */
+        .woo-section { padding: 100px 0; }
+        .woo-section h2 { font-size: 36px; font-weight: 700; text-align: center; margin-bottom: 16px; }
+        .woo-section > .container > p { color: var(--gray); text-align: center; font-size: 18px; margin-bottom: 48px; max-width: 600px; margin-left: auto; margin-right: auto; }
+
+        .woo-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; max-width: 800px; margin: 0 auto; }
+        .woo-item { display: flex; align-items: flex-start; gap: 12px; padding: 20px; border: 1px solid var(--border); border-radius: 8px; }
+        .woo-item .icon { font-size: 24px; flex-shrink: 0; }
+        .woo-item h4 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+        .woo-item p { font-size: 14px; color: var(--gray); }
+
+        /* ── CTA ──────────────────────────────────── */
+        .cta {
+            padding: 100px 0;
+            background: var(--dark);
+            color: #fff;
+            text-align: center;
+        }
+
+        .cta h2 { font-size: 40px; font-weight: 800; margin-bottom: 16px; letter-spacing: -1px; }
+        .cta p { color: #94a3b8; font-size: 18px; margin-bottom: 36px; max-width: 500px; margin-left: auto; margin-right: auto; }
+
+        /* ── Footer ───────────────────────────────── */
+        footer {
+            padding: 40px 0;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            font-size: 14px;
+            color: var(--gray);
+        }
+
+        /* ── Responsive ──────────────────────────── */
+        @media (max-width: 768px) {
+            .problem-grid, .feature-grid, .pricing-grid, .woo-grid { grid-template-columns: 1fr; }
+            .price-card--popular { transform: none; }
+            .hero-stats { flex-direction: column; gap: 24px; }
+            .nav-links { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="container">
+        <a href="/" class="logo">jet<span>strike</span></a>
+        <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#pricing">Pricing</a>
+            <a href="#woocommerce">WooCommerce</a>
+            <a href="https://wordpress.org/plugins/jetstrike-conflict-detector/" class="btn btn-outline">Download Free</a>
+            <a href="#pricing" class="btn btn-primary">Get Pro</a>
+        </div>
+    </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+    <div class="container">
+        <div class="hero-badge">The #1 Plugin Conflict Detector for WordPress</div>
+        <h1>Stop plugin conflicts before they break your store</h1>
+        <p>Automatically detect, diagnose, and prevent plugin conflicts with intelligent scanning. No more deactivating plugins one by one.</p>
+        <div class="hero-buttons">
+            <a href="https://wordpress.org/plugins/jetstrike-conflict-detector/" class="btn btn-primary btn-large">Download Free Plugin</a>
+            <a href="#pricing" class="btn btn-outline btn-large">View Pricing</a>
+        </div>
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <div class="hero-stat-number">5</div>
+                <div class="hero-stat-label">Analysis Engines</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-number">&lt;30s</div>
+                <div class="hero-stat-label">Quick Scan Time</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-number">O(N log N)</div>
+                <div class="hero-stat-label">Binary Search Efficiency</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Problem -->
+<section class="problem">
+    <div class="container">
+        <h2>The $2.6 billion problem</h2>
+        <p>Plugin conflicts cost WooCommerce stores billions in lost revenue every year. Sound familiar?</p>
+        <div class="problem-grid">
+            <div class="problem-card">
+                <div class="icon">&#9888;&#65039;</div>
+                <h3>White Screen of Death</h3>
+                <p>You update a plugin and your entire store goes down. Customers see errors. Revenue stops.</p>
+            </div>
+            <div class="problem-card">
+                <div class="icon">&#128337;</div>
+                <h3>Hours of Manual Testing</h3>
+                <p>Deactivating 30 plugins one by one to find the conflict. The current "solution" is madness.</p>
+            </div>
+            <div class="problem-card">
+                <div class="icon">&#128176;</div>
+                <h3>Broken Checkouts</h3>
+                <p>Two payment plugins conflict silently. Orders fail. You don't notice for days. Revenue is gone.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features -->
+<section class="features" id="features">
+    <div class="container">
+        <h2>Ten analysis engines. Zero blind spots.</h2>
+        <p>No other tool comes close to this depth of analysis.</p>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <span class="icon">&#128270;</span>
+                <h3>Static Code Analysis</h3>
+                <p>Tokenizes PHP source files to detect function collisions, class name conflicts, and global variable overwrites across all your plugins.</p>
+            </div>
+            <div class="feature-card">
+                <span class="icon">&#128279;</span>
+                <h3>Hook &amp; Filter Analysis</h3>
+                <p>Maps every add_action and add_filter call. Finds priority collisions, aggressive hook removals, and data-corrupting filter chains.</p>
+            </div>
+            <div class="feature-card">
+                <span class="icon">&#127912;</span>
+                <h3>Resource Collision Detection</h3>
+                <p>Catches duplicate script/style handles, shortcode conflicts, and REST API namespace collisions that cause silent failures.</p>
+            </div>
+            <div class="feature-card">
+                <span class="icon">&#9889;</span>
+                <h3>Runtime Sandbox Testing</h3>
+                <p>Tests plugin combinations in isolated loopback requests. Catches fatal errors, HTTP 500s, and PHP warnings without touching your live site.</p>
+                <span class="feature-badge feature-badge--pro">Pro</span>
+            </div>
+            <div class="feature-card">
+                <span class="icon">&#128640;</span>
+                <h3>Performance Impact Scoring</h3>
+                <p>Measures each plugin's load time, memory usage, and database queries. Finds compound slowdowns when plugins interact.</p>
+                <span class="feature-badge feature-badge--pro">Pro</span>
+            </div>
+            <div class="feature-card">
+                <span class="icon">&#128722;</span>
+                <h3>WooCommerce Deep Analysis</h3>
+                <p>Understands payment gateways, checkout fields, cart calculations, template overrides, and HPOS compatibility. Built for stores.</p>
+                <span class="feature-badge feature-badge--pro">Pro</span>
+            </div>
+            <div class="feature-card" style="border: 2px solid var(--primary); background: #f0f5ff;">
+                <span class="icon">&#128295;</span>
+                <h3>One-Click Auto-Fix</h3>
+                <p>Don't just detect conflicts &mdash; <strong>fix them automatically</strong>. Generates mu-plugin patches that adjust hook priorities, dequeue duplicate scripts, and guard against fatal errors. Fully reversible.</p>
+                <span class="feature-badge feature-badge--pro">Pro</span>
+            </div>
+            <div class="feature-card">
+                <span class="icon">&#128230;</span>
+                <h3>PHP Dependency Analysis</h3>
+                <p>Finds when two plugins bundle incompatible versions of Guzzle, Stripe, Carbon, or 10+ other libraries. The #1 cause of white screens nobody else catches.</p>
+                <span class="feature-badge feature-badge--pro">Pro</span>
+            </div>
+            <div class="feature-card">
+                <span class="icon">&#9000;</span>
+                <h3>JavaScript Deep Analysis</h3>
+                <p>Scans JS files for global namespace pollution, jQuery version overrides, prototype modifications, and wp_localize_script collisions. Frontend conflicts made visible.</p>
+                <span class="feature-badge feature-badge--pro">Pro</span>
+            </div>
+            <div class="feature-card">
+                <span class="icon">&#128451;</span>
+                <h3>Database Conflict Detection</h3>
+                <p>Detects plugins fighting over the same option keys, cron hooks, custom post types, taxonomies, and meta keys. Prevents silent data corruption.</p>
+                <span class="feature-badge feature-badge--pro">Pro</span>
+            </div>
+            <div class="feature-card">
+                <span class="icon">&#128187;</span>
+                <h3>WP-CLI Integration</h3>
+                <p>Full command-line scanning for developers. Run conflict detection in CI/CD pipelines, automate scans, and get JSON output for build gates.</p>
+                <span class="feature-badge feature-badge--pro">Pro</span>
+            </div>
+            <div class="feature-card">
+                <span class="icon">&#127760;</span>
+                <h3>Cloud Conflict Intelligence</h3>
+                <p>Instant results powered by anonymized community data. Before running local scans, checks a global conflict database for already-known issues between your plugins.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- WooCommerce Section -->
+<section class="woo-section" id="woocommerce">
+    <div class="container">
+        <h2>Built for WooCommerce stores</h2>
+        <p>The only conflict detector that understands WooCommerce internals. Protects your revenue where it matters most.</p>
+        <div class="woo-grid">
+            <div class="woo-item">
+                <div class="icon">&#128179;</div>
+                <div>
+                    <h4>Payment Gateway Conflicts</h4>
+                    <p>Detects when multiple gateways interfere with checkout processing</p>
+                </div>
+            </div>
+            <div class="woo-item">
+                <div class="icon">&#128221;</div>
+                <div>
+                    <h4>Checkout Field Collisions</h4>
+                    <p>Finds plugins that corrupt each other's checkout field modifications</p>
+                </div>
+            </div>
+            <div class="woo-item">
+                <div class="icon">&#128200;</div>
+                <div>
+                    <h4>Cart Calculation Interference</h4>
+                    <p>Catches hooks that produce incorrect totals, fees, or tax calculations</p>
+                </div>
+            </div>
+            <div class="woo-item">
+                <div class="icon">&#128196;</div>
+                <div>
+                    <h4>Template Override Conflicts</h4>
+                    <p>Detects when two plugins override the same WooCommerce template file</p>
+                </div>
+            </div>
+            <div class="woo-item">
+                <div class="icon">&#128451;</div>
+                <div>
+                    <h4>HPOS Compatibility</h4>
+                    <p>Flags plugins using legacy post-meta order queries incompatible with HPOS</p>
+                </div>
+            </div>
+            <div class="woo-item">
+                <div class="icon">&#128260;</div>
+                <div>
+                    <h4>Pre-Update Simulation</h4>
+                    <p>Tests new plugin versions against your stack before you click "Update"</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Pricing -->
+<section class="pricing" id="pricing">
+    <div class="container">
+        <h2>Simple, transparent pricing</h2>
+        <p>Start free. Upgrade when you need automated protection.</p>
+        <div class="pricing-grid">
+            <div class="price-card">
+                <h3>Free</h3>
+                <div class="price">$0</div>
+                <p class="price-desc">Perfect for getting started</p>
+                <ul>
+                    <li>Quick Scan (static analysis)</li>
+                    <li>1 Full Scan per week</li>
+                    <li>Function/class collision detection</li>
+                    <li>Hook conflict analysis</li>
+                    <li>Resource collision detection</li>
+                    <li>Last 3 scan history</li>
+                    <li class="disabled">Automated background scans</li>
+                    <li class="disabled">WooCommerce deep analysis</li>
+                    <li class="disabled">Email alerts</li>
+                </ul>
+                <a href="https://wordpress.org/plugins/jetstrike-conflict-detector/" class="btn btn-outline">Download Free</a>
+            </div>
+
+            <div class="price-card price-card--popular">
+                <h3>Pro</h3>
+                <div class="price">$79 <span>/ year</span></div>
+                <p class="price-desc">For serious store owners</p>
+                <ul>
+                    <li>Everything in Free</li>
+                    <li>Unlimited Full Scans</li>
+                    <li>Automated background scanning</li>
+                    <li>Pre-update conflict simulation</li>
+                    <li>WooCommerce deep analysis</li>
+                    <li>Advanced performance scoring</li>
+                    <li>Email conflict alerts</li>
+                    <li>14-day free trial</li>
+                    <li>50 scan history</li>
+                    <li>Priority support</li>
+                </ul>
+                <a href="#" class="btn btn-primary">Start Free Trial</a>
+            </div>
+
+            <div class="price-card">
+                <h3>Agency</h3>
+                <div class="price">$199 <span>/ year</span></div>
+                <p class="price-desc">For agencies and developers</p>
+                <ul>
+                    <li>Everything in Pro</li>
+                    <li>Unlimited scan history</li>
+                    <li>REST API access</li>
+                    <li>Multi-site support</li>
+                    <li>Slack integration</li>
+                    <li>Webhook notifications</li>
+                    <li>White-label reports</li>
+                    <li>Manage unlimited sites</li>
+                </ul>
+                <a href="#" class="btn btn-outline">Get Agency</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="cta">
+    <div class="container">
+        <h2>Never debug plugin conflicts manually again</h2>
+        <p>Join thousands of WordPress store owners who protect their revenue with intelligent conflict detection.</p>
+        <a href="https://wordpress.org/plugins/jetstrike-conflict-detector/" class="btn btn-primary btn-large">Get Started Free</a>
+    </div>
+</section>
+
+<footer>
+    <div class="container">
+        <p>&copy; 2026 Jetstrike. All rights reserved. | <a href="/privacy" style="color:inherit">Privacy Policy</a> | <a href="/terms" style="color:inherit">Terms</a></p>
+    </div>
+</footer>
+
+</body>
+</html>

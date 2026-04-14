@@ -483,7 +483,14 @@ final class RestController {
                 return sanitize_email($value);
 
             case 'slack_webhook_url':
-                return esc_url_raw($value);
+                if (empty($value)) {
+                    return '';
+                }
+                $url = esc_url_raw($value);
+                if (! preg_match('#^https://hooks\.slack\.com/services/#', $url)) {
+                    return '';
+                }
+                return $url;
 
             case 'scan_timeout':
                 return max(10, min(120, (int) $value));
