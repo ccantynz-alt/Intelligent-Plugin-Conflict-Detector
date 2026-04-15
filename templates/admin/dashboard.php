@@ -128,6 +128,32 @@ $grade_color = $grade_colors[$health['grade']] ?? '#6c757d';
         </div>
     </div>
 
+    <!-- Toolbar: Report, Export, Matrix -->
+    <div class="jetstrike-cd-card jetstrike-cd-card--full">
+        <div class="jetstrike-cd-toolbar">
+            <button type="button" class="button" id="jetstrike-generate-report">
+                <span class="dashicons dashicons-media-document"></span>
+                <?php esc_html_e('Generate Report', 'jetstrike-cd'); ?>
+            </button>
+            <button type="button" class="button" id="jetstrike-export-data">
+                <span class="dashicons dashicons-download"></span>
+                <?php esc_html_e('Export Data', 'jetstrike-cd'); ?>
+            </button>
+            <button type="button" class="button" id="jetstrike-toggle-matrix">
+                <span class="dashicons dashicons-grid-view"></span>
+                <?php esc_html_e('Compatibility Matrix', 'jetstrike-cd'); ?>
+            </button>
+        </div>
+
+        <!-- Compatibility Matrix (hidden by default, toggled by button) -->
+        <div id="jetstrike-matrix-container" style="display: none;">
+            <?php
+            $matrix = new \Jetstrike\ConflictDetector\Admin\CompatibilityMatrix($this->repository ?? $repository);
+            echo $matrix->render_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- HTML is escaped internally
+            ?>
+        </div>
+    </div>
+
     <!-- Active Conflicts Table -->
     <?php if ($total_conflicts > 0 && ! empty($active_conflicts['items'])): ?>
     <div class="jetstrike-cd-card jetstrike-cd-card--full">
