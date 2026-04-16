@@ -259,14 +259,15 @@ final class ReportGenerator {
      * Get description for a health grade.
      */
     private function grade_description(string $grade): string {
-        return match ($grade) {
+        $descriptions = [
             'A' => 'Excellent — your site has no significant plugin conflicts.',
             'B' => 'Good — minor issues detected that should be monitored.',
             'C' => 'Fair — several conflicts found that may affect site stability.',
             'D' => 'Poor — significant conflicts require attention.',
             'F' => 'Critical — your site has serious conflicts that need immediate action.',
-            default => 'Unknown health status.',
-        };
+        ];
+
+        return $descriptions[$grade] ?? 'Unknown health status.';
     }
 
     /**

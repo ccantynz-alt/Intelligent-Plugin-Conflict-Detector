@@ -100,18 +100,28 @@ final class AutoResolver {
         }
 
         // Dispatch to the appropriate resolver based on conflict type.
-        $result = match ($conflict->conflict_type) {
-            'hook_conflict'        => $this->resolve_hook_conflict($conflict, $details),
-            'resource_collision'   => $this->resolve_resource_collision($conflict, $details),
-            'function_redeclaration' => $this->resolve_function_conflict($conflict, $details),
-            'global_conflict'      => $this->resolve_global_conflict($conflict, $details),
-            default                => [
-                'success'    => false,
-                'method'     => 'unsupported',
-                'message'    => sprintf('Auto-fix is not available for "%s" conflicts. Manual intervention required.', $conflict->conflict_type),
-                'patch_file' => null,
-            ],
-        };
+        switch ($conflict->conflict_type) {
+            case 'hook_conflict':
+                $result = $this->resolve_hook_conflict($conflict, $details);
+                break;
+            case 'resource_collision':
+                $result = $this->resolve_resource_collision($conflict, $details);
+                break;
+            case 'function_redeclaration':
+                $result = $this->resolve_function_conflict($conflict, $details);
+                break;
+            case 'global_conflict':
+                $result = $this->resolve_global_conflict($conflict, $details);
+                break;
+            default:
+                $result = [
+                    'success'    => false,
+                    'method'     => 'unsupported',
+                    'message'    => sprintf('Auto-fix is not available for "%s" conflicts. Manual intervention required.', $conflict->conflict_type),
+                    'patch_file' => null,
+                ];
+                break;
+        }
 
         // If the patch was written, verify the site still responds normally.
         // If health verification fails, immediately roll back the patch so
