@@ -73,9 +73,10 @@ final class Activator {
                 'performance_threshold' => 3.0,
                 'excluded_plugins'     => [],
             ],
-            'jetstrike_cd_license_key'   => '',
-            'jetstrike_cd_license_tier'  => 'free',
-            'jetstrike_cd_activated_at'  => current_time('mysql', true),
+            'jetstrike_cd_license_key'            => '',
+            'jetstrike_cd_license_tier'           => 'free',
+            'jetstrike_cd_autofix_beta_enabled'   => 'no',
+            'jetstrike_cd_activated_at'           => current_time('mysql', true),
         ];
 
         foreach ($defaults as $key => $value) {

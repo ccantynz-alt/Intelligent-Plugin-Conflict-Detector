@@ -387,12 +387,21 @@ final class RestController {
             'max_pairs_per_batch',
             'performance_threshold',
             'excluded_plugins',
+            'autofix_beta_enabled',
         ];
 
         foreach ($body as $key => $value) {
             if (in_array($key, $allowed_keys, true)) {
                 $current[$key] = $this->sanitize_setting($key, $value);
             }
+        }
+
+        // Auto-Fix beta toggle is stored as a separate option
+        // because AutoResolver::is_beta_enabled() reads it directly.
+        if (isset($current['autofix_beta_enabled'])) {
+            $autofix_value = $current['autofix_beta_enabled'] ? 'yes' : 'no';
+            update_option('jetstrike_cd_autofix_beta_enabled', $autofix_value);
+            unset($current['autofix_beta_enabled']);
         }
 
         update_option('jetstrike_cd_settings', $current);

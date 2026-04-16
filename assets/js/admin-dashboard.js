@@ -37,6 +37,13 @@
             $(document).on('click', '#jetstrike-export-data', this.exportData.bind(this));
             $(document).on('click', '#jetstrike-toggle-matrix', this.toggleMatrix.bind(this));
 
+            // Import data.
+            $(document).on('click', '#jetstrike-import-data', this.importData.bind(this));
+            $(document).on('change', '#jetstrike-import-file', this.handleImportFile.bind(this));
+
+            // Pre-update check.
+            $(document).on('click', '.jetstrike-cd-preupdate-btn', this.preUpdateCheck.bind(this));
+
             // Settings form.
             $(document).on('click', '#jetstrike-save-settings', this.saveSettings.bind(this));
 
@@ -544,6 +551,97 @@
             }
         },
 
+        // ── Import Data ──────────────────────────────────────
+
+        importData: function (e) {
+            e.preventDefault();
+            $('#jetstrike-import-file').click();
+        },
+
+        handleImportFile: function (e) {
+            var file = e.target.files[0];
+            if (!file) return;
+
+            var reader = new FileReader();
+            reader.onload = function (evt) {
+                var json;
+                try {
+                    json = evt.target.result;
+                    JSON.parse(json); // Validate JSON.
+                } catch (err) {
+                    JetstrikeCD.showNotice('error', 'Invalid JSON file. Please select a valid Jetstrike export file.');
+                    return;
+                }
+
+                $.ajax({
+                    url: jetstrikeCD.ajaxUrl,
+                    type: 'POST',
+                    data: {
+                        action: 'jetstrike_cd_import_data',
+                        nonce: jetstrikeCD.ajaxNonce,
+                        import_data: json
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            JetstrikeCD.showNotice('success',
+                                'Imported ' + (response.data.imported || 0) + ' conflict(s). ' +
+                                (response.data.skipped || 0) + ' duplicate(s) skipped.');
+                            setTimeout(function () { window.location.reload(); }, 2000);
+                        } else {
+                            JetstrikeCD.showNotice('error', response.data.message || 'Import failed.');
+                        }
+                    },
+                    error: function () {
+                        JetstrikeCD.showNotice('error', 'Import failed. Please try again.');
+                    }
+                });
+            };
+            reader.readAsText(file);
+
+            // Reset the file input so the same file can be re-selected.
+            e.target.value = '';
+        },
+
+        // ── Pre-Update Check ─────────────────────────────────
+
+        preUpdateCheck: function (e) {
+            e.preventDefault();
+            var $btn = $(e.currentTarget);
+            var pluginFile = $btn.data('plugin');
+
+            if (!pluginFile) return;
+
+            $btn.prop('disabled', true).html('<span class="jetstrike-cd-spinner"></span> Checking...');
+
+            $.ajax({
+                url: jetstrikeCD.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'jetstrike_cd_pre_update_check',
+                    nonce: jetstrikeCD.ajaxNonce,
+                    plugin: pluginFile
+                },
+                success: function (response) {
+                    $btn.prop('disabled', false).html('<span class="dashicons dashicons-shield"></span> Pre-Update Check');
+
+                    if (response.success) {
+                        var data = response.data;
+                        var riskClass = data.risk_level === 'dangerous' ? 'error' :
+                                       (data.risk_level === 'risky' ? 'warning' : 'success');
+                        var msg = 'Risk Score: ' + data.risk_score + '/100 (' + data.risk_level + '). ' +
+                                  (data.new_conflicts || 0) + ' potential new conflict(s) detected.';
+                        JetstrikeCD.showNotice(riskClass, msg);
+                    } else {
+                        JetstrikeCD.showNotice('error', response.data.message || 'Pre-update check failed.');
+                    }
+                },
+                error: function () {
+                    $btn.prop('disabled', false).html('<span class="dashicons dashicons-shield"></span> Pre-Update Check');
+                    JetstrikeCD.showNotice('error', 'Pre-update check failed.');
+                }
+            });
+        },
+
         // ── Settings ──────────────────────────────────────────
 
         saveSettings: function (e) {
@@ -555,6 +653,7 @@
             // Checkboxes.
             settings.auto_scan_enabled = $form.find('[name="auto_scan_enabled"]').is(':checked');
             settings.email_alerts = $form.find('[name="email_alerts"]').is(':checked');
+            settings.autofix_beta_enabled = $form.find('[name="autofix_beta_enabled"]').is(':checked');
 
             // Text/select fields.
             settings.scan_frequency = $form.find('[name="scan_frequency"]').val();
