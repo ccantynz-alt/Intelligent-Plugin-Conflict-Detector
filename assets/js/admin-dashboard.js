@@ -32,6 +32,11 @@
             $(document).on('click', '#jetstrike-activate-license', this.activateLicense.bind(this));
             $(document).on('click', '#jetstrike-deactivate-license', this.deactivateLicense.bind(this));
 
+            // Toolbar actions.
+            $(document).on('click', '#jetstrike-generate-report', this.generateReport.bind(this));
+            $(document).on('click', '#jetstrike-export-data', this.exportData.bind(this));
+            $(document).on('click', '#jetstrike-toggle-matrix', this.toggleMatrix.bind(this));
+
             // Settings form.
             $(document).on('click', '#jetstrike-save-settings', this.saveSettings.bind(this));
 
@@ -448,6 +453,95 @@
                     window.location.reload();
                 }
             });
+        },
+
+        // ── Toolbar Actions ───────────────────────────────────
+
+        generateReport: function (e) {
+            e.preventDefault();
+            var $btn = $(e.currentTarget);
+            $btn.prop('disabled', true).html('<span class="jetstrike-cd-spinner"></span> Generating...');
+
+            $.ajax({
+                url: jetstrikeCD.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'jetstrike_cd_generate_report',
+                    nonce: jetstrikeCD.ajaxNonce
+                },
+                success: function (response) {
+                    $btn.prop('disabled', false).html('<span class="dashicons dashicons-media-document"></span> Generate Report');
+
+                    if (response.success) {
+                        // Open report in new window.
+                        var win = window.open('', '_blank');
+                        win.document.write(response.data.html);
+                        win.document.close();
+                        JetstrikeCD.showNotice('success', 'Report generated. A new window has opened with the report.');
+                    } else {
+                        JetstrikeCD.showNotice('error', response.data.message || 'Failed to generate report.');
+                    }
+                },
+                error: function () {
+                    $btn.prop('disabled', false).html('<span class="dashicons dashicons-media-document"></span> Generate Report');
+                    JetstrikeCD.showNotice('error', 'Failed to generate report.');
+                }
+            });
+        },
+
+        exportData: function (e) {
+            e.preventDefault();
+            var $btn = $(e.currentTarget);
+            $btn.prop('disabled', true).html('<span class="jetstrike-cd-spinner"></span> Exporting...');
+
+            $.ajax({
+                url: jetstrikeCD.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'jetstrike_cd_export_data',
+                    nonce: jetstrikeCD.ajaxNonce,
+                    include_scans: true
+                },
+                success: function (response) {
+                    $btn.prop('disabled', false).html('<span class="dashicons dashicons-download"></span> Export Data');
+
+                    if (response.success) {
+                        // Trigger file download.
+                        var blob = new Blob([response.data.json], { type: 'application/json' });
+                        var url = URL.createObjectURL(blob);
+                        var a = document.createElement('a');
+                        a.href = url;
+                        a.download = response.data.filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+
+                        JetstrikeCD.showNotice('success',
+                            'Exported ' + response.data.stats.conflicts + ' conflict(s) and ' +
+                            response.data.stats.plugins + ' plugin(s).');
+                    } else {
+                        JetstrikeCD.showNotice('error', response.data.message || 'Export failed.');
+                    }
+                },
+                error: function () {
+                    $btn.prop('disabled', false).html('<span class="dashicons dashicons-download"></span> Export Data');
+                    JetstrikeCD.showNotice('error', 'Export failed.');
+                }
+            });
+        },
+
+        toggleMatrix: function (e) {
+            e.preventDefault();
+            var $container = $('#jetstrike-matrix-container');
+            $container.slideToggle(300);
+
+            var $btn = $(e.currentTarget);
+            if ($container.is(':visible')) {
+                $btn.addClass('button-primary');
+            } else {
+                $btn.removeClass('button-primary');
+            }
         },
 
         // ── Settings ──────────────────────────────────────────

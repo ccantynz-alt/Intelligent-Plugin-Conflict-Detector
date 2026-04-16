@@ -49,6 +49,7 @@ jetstrike-conflict-detector/
 │   │   ├── ResourceAnalyzer.php       # JS/CSS/global collision detection
 │   │   ├── PerformanceAnalyzer.php    # Performance impact scoring
 │   │   ├── WooCommerceAnalyzer.php    # WooCommerce-specific rules
+│   │   ├── PreUpdateAnalyzer.php      # Pre-update simulation engine
 │   │   ├── DependencyAnalyzer.php     # Bundled PHP library version conflicts
 │   │   ├── JavaScriptAnalyzer.php     # JS global/prototype/jQuery conflicts
 │   │   └── DatabaseAnalyzer.php       # Option/cron/CPT/table collisions
@@ -69,6 +70,12 @@ jetstrike-conflict-detector/
 │   │   └── CompatibilityPatch.php     # mu-plugin patch file generator
 │   ├── CLI/
 │   │   └── Commands.php               # WP-CLI integration
+│   ├── Report/
+│   │   └── ReportGenerator.php        # Professional HTML conflict reports
+│   ├── Export/
+│   │   └── ExportManager.php          # Export/import conflict profiles
+│   ├── Multisite/
+│   │   └── NetworkScanner.php         # Multisite network-wide scanning
 │   ├── Database/
 │   │   ├── Migrator.php               # Schema versioning & migrations
 │   │   └── Repository.php             # Data access layer
@@ -354,6 +361,9 @@ All under namespace `jetstrike/v1`:
 16. Dependency Analyzer + JavaScript Analyzer + Database Analyzer
 17. WP-CLI Commands
 18. Landing page (site/index.html)
+19. Pre-Update Simulation Engine
+20. Compatibility Matrix + Report Generator + Export/Import
+21. Multisite Network Scanner
 
 ## Git Strategy
 

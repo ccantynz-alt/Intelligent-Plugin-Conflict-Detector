@@ -12,6 +12,9 @@ namespace Jetstrike\ConflictDetector\Admin;
 use Jetstrike\ConflictDetector\Database\Repository;
 use Jetstrike\ConflictDetector\Scanner\ScanQueue;
 use Jetstrike\ConflictDetector\Resolver\AutoResolver;
+use Jetstrike\ConflictDetector\Report\ReportGenerator;
+use Jetstrike\ConflictDetector\Export\ExportManager;
+use Jetstrike\ConflictDetector\Analyzer\PreUpdateAnalyzer;
 use Jetstrike\ConflictDetector\Subscription\FeatureFlags;
 
 final class AdminAjax {
@@ -33,6 +36,10 @@ final class AdminAjax {
         add_action('wp_ajax_jetstrike_cd_update_conflict', [$this, 'update_conflict_status']);
         add_action('wp_ajax_jetstrike_cd_auto_fix', [$this, 'auto_fix_conflict']);
         add_action('wp_ajax_jetstrike_cd_revert_fix', [$this, 'revert_fix']);
+        add_action('wp_ajax_jetstrike_cd_generate_report', [$this, 'generate_report']);
+        add_action('wp_ajax_jetstrike_cd_export_data', [$this, 'export_data']);
+        add_action('wp_ajax_jetstrike_cd_import_data', [$this, 'import_data']);
+        add_action('wp_ajax_jetstrike_cd_pre_update_check', [$this, 'pre_update_check']);
         add_action('wp_ajax_jetstrike_cd_activate_license', [$this, 'activate_license']);
         add_action('wp_ajax_jetstrike_cd_deactivate_license', [$this, 'deactivate_license']);
     }
@@ -248,6 +255,100 @@ final class AdminAjax {
                 'message' => __('No auto-fix found for this conflict.', 'jetstrike-cd'),
             ]);
         }
+    }
+
+    /**
+     * Generate a professional conflict report.
+     */
+    public function generate_report(): void {
+        $this->verify_request();
+
+        $scan_id = (int) ($_POST['scan_id'] ?? 0);
+        $generator = new ReportGenerator($this->repository);
+        $report = $generator->generate($scan_id > 0 ? $scan_id : null);
+
+        wp_send_json_success([
+            'html'     => $report['html'],
+            'filename' => $report['filename'],
+        ]);
+    }
+
+    /**
+     * Export conflict data as JSON.
+     */
+    public function export_data(): void {
+        $this->verify_request();
+
+        if (! FeatureFlags::is_at_least('pro')) {
+            wp_send_json_error(['message' => __('Export requires a Pro or Agency plan.', 'jetstrike-cd')]);
+        }
+
+        $exporter = new ExportManager($this->repository);
+        $export = $exporter->export([
+            'include_scans'    => ! empty($_POST['include_scans']),
+            'include_resolved' => ! empty($_POST['include_resolved']),
+        ]);
+
+        wp_send_json_success([
+            'json'     => $export['json'],
+            'filename' => $export['filename'],
+            'stats'    => $export['stats'],
+        ]);
+    }
+
+    /**
+     * Import conflict data from JSON.
+     */
+    public function import_data(): void {
+        $this->verify_request();
+
+        if (! FeatureFlags::is_at_least('pro')) {
+            wp_send_json_error(['message' => __('Import requires a Pro or Agency plan.', 'jetstrike-cd')]);
+        }
+
+        $json = wp_unslash($_POST['import_json'] ?? '');
+
+        if (empty($json)) {
+            wp_send_json_error(['message' => __('No import data provided.', 'jetstrike-cd')]);
+        }
+
+        $importer = new ExportManager($this->repository);
+        $result = $importer->import($json, ['merge' => true]);
+
+        if ($result['success']) {
+            wp_send_json_success($result);
+        } else {
+            wp_send_json_error($result);
+        }
+    }
+
+    /**
+     * Run a pre-update compatibility check.
+     */
+    public function pre_update_check(): void {
+        $this->verify_request();
+
+        if (! FeatureFlags::can('pre_update_scan')) {
+            wp_send_json_error([
+                'message' => __('Pre-update simulation requires a Pro or Agency plan.', 'jetstrike-cd'),
+            ]);
+        }
+
+        $plugin_file = sanitize_text_field($_POST['plugin_file'] ?? '');
+
+        if (empty($plugin_file)) {
+            wp_send_json_error(['message' => __('No plugin specified.', 'jetstrike-cd')]);
+        }
+
+        $analyzer = new PreUpdateAnalyzer($this->repository);
+
+        // Quick check first (instant, no download).
+        $quick = $analyzer->quick_check($plugin_file);
+
+        wp_send_json_success([
+            'quick_check' => $quick,
+            'plugin'      => dirname($plugin_file),
+        ]);
     }
 
     /**
