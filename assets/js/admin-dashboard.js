@@ -10,6 +10,9 @@
     var JetstrikeCD = {
         pollInterval: null,
         currentScanId: null,
+        pollErrorCount: 0,
+        maxPollErrors: 5,
+        isProcessing: {},
 
         init: function () {
             this.bindEvents();
@@ -117,12 +120,15 @@
             $.ajax({
                 url: jetstrikeCD.ajaxUrl,
                 type: 'POST',
+                timeout: 15000,
                 data: {
                     action: 'jetstrike_cd_scan_status',
                     nonce: jetstrikeCD.ajaxNonce,
                     scan_id: this.currentScanId
                 },
                 success: function (response) {
+                    JetstrikeCD.pollErrorCount = 0;
+
                     if (!response.success) return;
 
                     var data = response.data;
@@ -137,6 +143,16 @@
                         JetstrikeCD.showNotice('error', 'Scan ' + data.status + '.');
                     } else {
                         JetstrikeCD.updateProgress(50);
+                    }
+                },
+                error: function () {
+                    JetstrikeCD.pollErrorCount++;
+
+                    if (JetstrikeCD.pollErrorCount >= JetstrikeCD.maxPollErrors) {
+                        JetstrikeCD.stopPolling();
+                        JetstrikeCD.hideProgress();
+                        JetstrikeCD.resetButtons();
+                        JetstrikeCD.showNotice('error', 'Lost connection to scan. Please refresh and check scan status.');
                     }
                 }
             });
@@ -296,10 +312,13 @@
             var $btn = $(e.currentTarget);
             var conflictId = $btn.data('conflict-id');
 
+            if (this.isProcessing[conflictId]) return;
+
             if (!confirm('Apply auto-fix for this conflict? A mu-plugin patch will be generated. You can revert this at any time.')) {
                 return;
             }
 
+            this.isProcessing[conflictId] = true;
             $btn.prop('disabled', true).html('<span class="jetstrike-cd-spinner"></span> Fixing...');
 
             $.ajax({
@@ -311,8 +330,13 @@
                     conflict_id: conflictId
                 },
                 success: function (response) {
+                    delete JetstrikeCD.isProcessing[conflictId];
+
                     if (response.success) {
                         JetstrikeCD.showNotice('success', response.data.message);
+
+                        // Store row reference before replaceWith destroys it.
+                        var $row = $btn.closest('tr');
 
                         // Replace button with revert button.
                         $btn.replaceWith(
@@ -323,10 +347,10 @@
                         );
 
                         // Update status dropdown to resolved.
-                        $btn.closest('tr').find('.jetstrike-cd-conflict-action').val('resolved');
+                        $row.find('.jetstrike-cd-conflict-action').val('resolved');
 
                         // Fade the row to indicate it's resolved.
-                        $btn.closest('tr').addClass('jetstrike-cd-row-resolved');
+                        $row.addClass('jetstrike-cd-row-resolved');
                     } else {
                         $btn.prop('disabled', false).html(
                             '<span class="dashicons dashicons-admin-generic"></span> Auto-Fix'
@@ -335,6 +359,7 @@
                     }
                 },
                 error: function () {
+                    delete JetstrikeCD.isProcessing[conflictId];
                     $btn.prop('disabled', false).html(
                         '<span class="dashicons dashicons-admin-generic"></span> Auto-Fix'
                     );
@@ -366,6 +391,9 @@
                     if (response.success) {
                         JetstrikeCD.showNotice('info', response.data.message);
 
+                        // Store row reference before replaceWith destroys it.
+                        var $row = $btn.closest('tr');
+
                         // Replace revert button with auto-fix button.
                         $btn.replaceWith(
                             '<button type="button" class="button button-small jetstrike-cd-autofix-btn" ' +
@@ -375,8 +403,8 @@
                         );
 
                         // Update status dropdown to active.
-                        $btn.closest('tr').find('.jetstrike-cd-conflict-action').val('active');
-                        $btn.closest('tr').removeClass('jetstrike-cd-row-resolved');
+                        $row.find('.jetstrike-cd-conflict-action').val('active');
+                        $row.removeClass('jetstrike-cd-row-resolved');
                     } else {
                         $btn.prop('disabled', false).html(
                             '<span class="dashicons dashicons-undo"></span> Revert'

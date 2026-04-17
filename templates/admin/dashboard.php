@@ -41,7 +41,7 @@ $grade_color = $grade_colors[$health['grade']] ?? '#6c757d';
         <!-- Health Score Card -->
         <div class="jetstrike-cd-card jetstrike-cd-card--health">
             <div class="jetstrike-cd-health-score">
-                <div class="jetstrike-cd-health-circle" style="--score-color: <?php echo esc_attr($grade_color); ?>">
+                <div class="jetstrike-cd-health-circle" role="img" aria-label="<?php echo esc_attr(sprintf(__('Health grade: %s, score: %d out of 100', 'jetstrike-cd'), $health['grade'], $health['score'])); ?>" style="--score-color: <?php echo esc_attr($grade_color); ?>">
                     <span class="jetstrike-cd-health-grade"><?php echo esc_html($health['grade']); ?></span>
                     <span class="jetstrike-cd-health-number"><?php echo (int) $health['score']; ?>/100</span>
                 </div>
@@ -140,12 +140,12 @@ $grade_color = $grade_colors[$health['grade']] ?? '#6c757d';
         <table class="widefat striped jetstrike-cd-table">
             <thead>
                 <tr>
-                    <th><?php esc_html_e('Severity', 'jetstrike-cd'); ?></th>
-                    <th><?php esc_html_e('Type', 'jetstrike-cd'); ?></th>
-                    <th><?php esc_html_e('Description', 'jetstrike-cd'); ?></th>
-                    <th><?php esc_html_e('Plugins', 'jetstrike-cd'); ?></th>
-                    <th><?php esc_html_e('Auto-Fix', 'jetstrike-cd'); ?></th>
-                    <th><?php esc_html_e('Actions', 'jetstrike-cd'); ?></th>
+                    <th scope="col"><?php esc_html_e('Severity', 'jetstrike-cd'); ?></th>
+                    <th scope="col"><?php esc_html_e('Type', 'jetstrike-cd'); ?></th>
+                    <th scope="col"><?php esc_html_e('Description', 'jetstrike-cd'); ?></th>
+                    <th scope="col"><?php esc_html_e('Plugins', 'jetstrike-cd'); ?></th>
+                    <th scope="col"><?php esc_html_e('Auto-Fix', 'jetstrike-cd'); ?></th>
+                    <th scope="col"><?php esc_html_e('Actions', 'jetstrike-cd'); ?></th>
                 </tr>
             </thead>
             <tbody>

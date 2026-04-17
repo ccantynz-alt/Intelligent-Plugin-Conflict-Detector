@@ -139,6 +139,16 @@ final class BinarySearch {
      * @param string $plugin_b Second plugin.
      */
     private function test_pair(string $plugin_a, string $plugin_b): void {
+        // Deduplicate: skip if we've already recorded this pair.
+        foreach ($this->conflicts as $existing) {
+            if (
+                ($existing['plugin_a'] === $plugin_a && $existing['plugin_b'] === $plugin_b) ||
+                ($existing['plugin_a'] === $plugin_b && $existing['plugin_b'] === $plugin_a)
+            ) {
+                return;
+            }
+        }
+
         $result = $this->sandbox->test_plugins([$plugin_a, $plugin_b]);
         $this->test_count++;
 
@@ -233,7 +243,12 @@ final class BinarySearch {
      */
     private function report_progress(string $message): void {
         if ($this->progress_callback !== null) {
-            ($this->progress_callback)($message, $this->test_count);
+            try {
+                ($this->progress_callback)($message, $this->test_count);
+            } catch (\Throwable $e) {
+                // Never let a callback failure break the scan.
+                $this->progress_callback = null;
+            }
         }
     }
 }

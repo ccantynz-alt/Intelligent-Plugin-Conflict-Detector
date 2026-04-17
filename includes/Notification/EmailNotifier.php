@@ -38,7 +38,11 @@ final class EmailNotifier {
             sprintf('From: Jetstrike Conflict Detector <%s>', get_option('admin_email')),
         ];
 
-        wp_mail($to, $subject, $body, $headers);
+        $sent = wp_mail($to, $subject, $body, $headers);
+
+        if (! $sent) {
+            error_log(sprintf('[Jetstrike] Failed to send scan results email to %s (scan #%d)', $to, $scan_id));
+        }
     }
 
     /**
@@ -73,7 +77,11 @@ final class EmailNotifier {
             'Content-Type: text/html; charset=UTF-8',
         ];
 
-        wp_mail($to, $subject, $body, $headers);
+        $sent = wp_mail($to, $subject, $body, $headers);
+
+        if (! $sent) {
+            error_log(sprintf('[Jetstrike] Failed to send critical alert email to %s', $to));
+        }
     }
 
     /**

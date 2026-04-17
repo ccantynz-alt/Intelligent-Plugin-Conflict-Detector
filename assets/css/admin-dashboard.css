@@ -536,3 +536,52 @@
     text-align: center;
     white-space: nowrap;
 }
+
+/* ── Accessibility ────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+    .jetstrike-cd-progress-fill {
+        animation: none;
+    }
+
+    .jetstrike-cd-spinner {
+        animation: none;
+        border-top-color: transparent;
+    }
+
+    .jetstrike-cd-autofix-btn,
+    .jetstrike-cd-revert-btn,
+    .button {
+        transition: none;
+    }
+}
+
+.jetstrike-cd-scan-btn:focus-visible,
+.jetstrike-cd-autofix-btn:focus-visible,
+.jetstrike-cd-revert-btn:focus-visible,
+.jetstrike-cd-conflict-action:focus-visible,
+.jetstrike-cd-view-all:focus-visible,
+.button:focus-visible {
+    outline: 2px solid #2271b1;
+    outline-offset: 2px;
+    box-shadow: none;
+}
+
+.jetstrike-cd-table th[scope="col"] {
+    cursor: default;
+}
+
+/* High contrast mode support */
+@media (forced-colors: active) {
+    .jetstrike-cd-badge {
+        border: 1px solid currentColor;
+    }
+
+    .jetstrike-cd-health-circle {
+        border-color: currentColor;
+    }
+
+    .jetstrike-cd-progress-fill {
+        background: Highlight;
+    }
+}

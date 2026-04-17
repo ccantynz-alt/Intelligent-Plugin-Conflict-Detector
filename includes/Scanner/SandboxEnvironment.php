@@ -35,7 +35,8 @@ final class SandboxEnvironment {
      * @return bool True if sandbox is ready.
      */
     public function initialize(): bool {
-        set_transient('jetstrike_cd_sandbox_token', $this->auth_token, HOUR_IN_SECONDS);
+        // Use a 2-hour TTL to prevent token expiry during long scans.
+        set_transient('jetstrike_cd_sandbox_token', $this->auth_token, 2 * HOUR_IN_SECONDS);
 
         // Measure baseline response time with no extra plugins.
         $baseline = $this->execute_request([]);
@@ -97,7 +98,7 @@ final class SandboxEnvironment {
      */
     private function execute_request(array $plugins): ?array {
         // Store the plugin list for the sandbox endpoint to pick up.
-        set_transient('jetstrike_cd_sandbox_plugins', $plugins, 300);
+        set_transient('jetstrike_cd_sandbox_plugins', $plugins, 2 * HOUR_IN_SECONDS);
 
         $nonce = wp_create_nonce('jetstrike_cd_sandbox');
 

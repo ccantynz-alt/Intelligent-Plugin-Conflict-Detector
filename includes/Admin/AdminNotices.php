@@ -47,6 +47,12 @@ final class AdminNotices {
      * Show persistent warning if critical conflicts exist.
      */
     private function show_critical_warning(): void {
+        // Respect 24-hour dismissal window.
+        $dismissed_at = (int) get_option('jetstrike_cd_critical_dismissed', 0);
+        if ($dismissed_at > 0 && (time() - $dismissed_at) < DAY_IN_SECONDS) {
+            return;
+        }
+
         $summary = $this->repository->get_conflict_summary();
 
         if ($summary['critical'] > 0) {
@@ -110,8 +116,8 @@ final class AdminNotices {
             }
         }
 
-        // Clear notices after display.
-        delete_option('jetstrike_cd_pending_notices');
+        // Clear only the notices we just displayed.
+        update_option('jetstrike_cd_pending_notices', []);
     }
 
     /**

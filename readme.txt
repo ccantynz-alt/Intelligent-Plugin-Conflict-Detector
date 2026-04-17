@@ -1,10 +1,13 @@
 === Jetstrike Conflict Detector ===
 Contributors: jetstrike
+Donate link: https://jetstrike.io/
 Tags: conflict detector, plugin conflicts, woocommerce, troubleshooting, site health
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
 Stable tag: 1.0.0
+Text Domain: jetstrike-cd
+Domain Path: /languages
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -91,13 +94,20 @@ There's no limit. The binary search algorithm efficiently handles 30+ active plu
 * Initial release
 * Static code analysis (functions, classes, globals, hooks, resources)
 * Runtime sandbox testing with binary search
-* WooCommerce-specific conflict analysis
+* WooCommerce-specific conflict analysis (payment gateways, checkout fields, HPOS)
+* One-click auto-fix engine with reversible mu-plugin patches
+* PHP dependency version conflict detection (Guzzle, Stripe, Carbon, etc.)
+* JavaScript deep analysis (global pollution, jQuery overrides, prototype conflicts)
+* Database conflict detection (options, cron hooks, CPTs, taxonomies, meta keys)
 * Background monitoring and update watching
-* REST API
+* REST API for programmatic conflict management
+* WP-CLI integration for CI/CD pipelines
 * Email and Slack notifications
+* Cloud conflict intelligence powered by anonymized community data
 * WordPress Site Health integration
 * Admin dashboard with health scoring
 * Free/Pro/Agency subscription tiers
+* WCAG 2.1 AA accessible admin interface
 
 == Upgrade Notice ==
 

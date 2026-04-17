@@ -41,12 +41,13 @@ final class LicenseManager {
         ]);
 
         if ($response === null) {
-            // When API is unreachable, store key and validate later.
+            // When API is unreachable, store key and validate later — but don't report success.
             update_option('jetstrike_cd_license_key', $license_key);
             update_option('jetstrike_cd_license_status', 'pending');
 
             return [
-                'success' => true,
+                'success' => false,
+                'pending' => true,
                 'tier'    => FeatureFlags::TIER_FREE,
                 'message' => __('License key saved. Validation will complete when the license server is available.', 'jetstrike-cd'),
             ];

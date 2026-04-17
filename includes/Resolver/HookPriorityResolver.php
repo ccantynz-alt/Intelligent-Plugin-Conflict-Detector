@@ -63,15 +63,23 @@ add_action('plugins_loaded', function () {
 
         // Identify callbacks belonging to plugin B by checking the file path.
         \$file = '';
-        if (is_array(\$func) && is_object(\$func[0])) {
-            \$ref = new \ReflectionMethod(\$func[0], \$func[1]);
-            \$file = \$ref->getFileName();
-        } elseif (is_string(\$func) && function_exists(\$func)) {
-            \$ref = new \ReflectionFunction(\$func);
-            \$file = \$ref->getFileName();
-        } elseif (\$func instanceof \Closure) {
-            \$ref = new \ReflectionFunction(\$func);
-            \$file = \$ref->getFileName();
+        try {
+            if (is_array(\$func) && is_object(\$func[0])) {
+                \$ref = new \ReflectionMethod(\$func[0], \$func[1]);
+                \$file = \$ref->getFileName();
+            } elseif (is_string(\$func) && function_exists(\$func)) {
+                \$ref = new \ReflectionFunction(\$func);
+                \$file = \$ref->getFileName();
+            } elseif (\$func instanceof \Closure) {
+                \$ref = new \ReflectionFunction(\$func);
+                \$file = \$ref->getFileName();
+            }
+        } catch (\ReflectionException \$e) {
+            continue;
+        }
+
+        if (\$file === false || \$file === null) {
+            continue;
         }
 
         // Check if this callback belongs to plugin B.

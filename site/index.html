@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jetstrike - Intelligent Plugin Conflict Detector for WordPress &amp; WooCommerce</title>
     <meta name="description" content="Automatically detect and prevent plugin conflicts before they break your store. The most advanced conflict detection for WordPress and WooCommerce.">
+    <meta property="og:title" content="Jetstrike — Intelligent Plugin Conflict Detector for WordPress & WooCommerce">
+    <meta property="og:description" content="Automatically detect, diagnose, and fix plugin conflicts with 10 analysis engines. Static analysis, runtime sandbox testing, WooCommerce deep analysis, and one-click auto-fix.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://jetstrike.io/">
+    <meta property="og:image" content="https://jetstrike.io/images/og-card.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Jetstrike — Plugin Conflict Detector for WordPress">
+    <meta name="twitter:description" content="10 analysis engines. One-click auto-fix. The most advanced conflict detection for WordPress and WooCommerce.">
     <style>
         :root {
             --primary: #2563eb;
@@ -20,6 +28,8 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, sans-serif;
@@ -284,21 +294,84 @@
             color: var(--gray);
         }
 
+        /* ── Skip Link ───────────────────────────── */
+        .skip-link {
+            position: absolute;
+            top: -100%;
+            left: 16px;
+            background: var(--primary);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 4px;
+            z-index: 200;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .skip-link:focus { top: 8px; }
+
+        /* ── Mobile Nav ──────────────────────────── */
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .nav-toggle span {
+            display: block;
+            width: 24px;
+            height: 2px;
+            background: var(--dark);
+            border-radius: 2px;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+        .nav-toggle[aria-expanded="true"] span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+        .nav-toggle[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
+        .nav-toggle[aria-expanded="true"] span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+        /* ── Focus Visible ───────────────────────── */
+        a:focus-visible, button:focus-visible, select:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
         /* ── Responsive ──────────────────────────── */
         @media (max-width: 768px) {
             .problem-grid, .feature-grid, .pricing-grid, .woo-grid { grid-template-columns: 1fr; }
             .price-card--popular { transform: none; }
             .hero-stats { flex-direction: column; gap: 24px; }
-            .nav-links { display: none; }
+            .nav-toggle { display: flex; }
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: #fff;
+                flex-direction: column;
+                padding: 16px 24px;
+                border-bottom: 1px solid var(--border);
+                gap: 16px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            }
+            .nav-links.is-open { display: flex; }
+            .nav-links .btn { width: 100%; justify-content: center; }
         }
     </style>
 </head>
 <body>
 
-<nav>
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<nav aria-label="Main navigation">
     <div class="container">
         <a href="/" class="logo">jet<span>strike</span></a>
-        <div class="nav-links">
+        <button class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Toggle navigation menu">
+            <span></span><span></span><span></span>
+        </button>
+        <div class="nav-links" id="nav-menu">
             <a href="#features">Features</a>
             <a href="#pricing">Pricing</a>
             <a href="#woocommerce">WooCommerce</a>
@@ -309,9 +382,9 @@
 </nav>
 
 <!-- Hero -->
-<section class="hero">
+<section class="hero" id="main-content">
     <div class="container">
-        <div class="hero-badge">The #1 Plugin Conflict Detector for WordPress</div>
+        <div class="hero-badge">The Most Advanced Plugin Conflict Detector for WordPress</div>
         <h1>Stop plugin conflicts before they break your store</h1>
         <p>Automatically detect, diagnose, and prevent plugin conflicts with intelligent scanning. No more deactivating plugins one by one.</p>
         <div class="hero-buttons">
@@ -342,17 +415,17 @@
         <p>Plugin conflicts cost WooCommerce stores billions in lost revenue every year. Sound familiar?</p>
         <div class="problem-grid">
             <div class="problem-card">
-                <div class="icon">&#9888;&#65039;</div>
+                <div class="icon" role="img" aria-label="Warning">&#9888;&#65039;</div>
                 <h3>White Screen of Death</h3>
                 <p>You update a plugin and your entire store goes down. Customers see errors. Revenue stops.</p>
             </div>
             <div class="problem-card">
-                <div class="icon">&#128337;</div>
+                <div class="icon" role="img" aria-label="Clock">&#128337;</div>
                 <h3>Hours of Manual Testing</h3>
                 <p>Deactivating 30 plugins one by one to find the conflict. The current "solution" is madness.</p>
             </div>
             <div class="problem-card">
-                <div class="icon">&#128176;</div>
+                <div class="icon" role="img" aria-label="Money">&#128176;</div>
                 <h3>Broken Checkouts</h3>
                 <p>Two payment plugins conflict silently. Orders fail. You don't notice for days. Revenue is gone.</p>
             </div>
@@ -367,70 +440,70 @@
         <p>No other tool comes close to this depth of analysis.</p>
         <div class="feature-grid">
             <div class="feature-card">
-                <span class="icon">&#128270;</span>
+                <span class="icon" aria-hidden="true">&#128270;</span>
                 <h3>Static Code Analysis</h3>
                 <p>Tokenizes PHP source files to detect function collisions, class name conflicts, and global variable overwrites across all your plugins.</p>
             </div>
             <div class="feature-card">
-                <span class="icon">&#128279;</span>
+                <span class="icon" aria-hidden="true">&#128279;</span>
                 <h3>Hook &amp; Filter Analysis</h3>
                 <p>Maps every add_action and add_filter call. Finds priority collisions, aggressive hook removals, and data-corrupting filter chains.</p>
             </div>
             <div class="feature-card">
-                <span class="icon">&#127912;</span>
+                <span class="icon" aria-hidden="true">&#127912;</span>
                 <h3>Resource Collision Detection</h3>
                 <p>Catches duplicate script/style handles, shortcode conflicts, and REST API namespace collisions that cause silent failures.</p>
             </div>
             <div class="feature-card">
-                <span class="icon">&#9889;</span>
+                <span class="icon" aria-hidden="true">&#9889;</span>
                 <h3>Runtime Sandbox Testing</h3>
                 <p>Tests plugin combinations in isolated loopback requests. Catches fatal errors, HTTP 500s, and PHP warnings without touching your live site.</p>
                 <span class="feature-badge feature-badge--pro">Pro</span>
             </div>
             <div class="feature-card">
-                <span class="icon">&#128640;</span>
+                <span class="icon" aria-hidden="true">&#128640;</span>
                 <h3>Performance Impact Scoring</h3>
                 <p>Measures each plugin's load time, memory usage, and database queries. Finds compound slowdowns when plugins interact.</p>
                 <span class="feature-badge feature-badge--pro">Pro</span>
             </div>
             <div class="feature-card">
-                <span class="icon">&#128722;</span>
+                <span class="icon" aria-hidden="true">&#128722;</span>
                 <h3>WooCommerce Deep Analysis</h3>
                 <p>Understands payment gateways, checkout fields, cart calculations, template overrides, and HPOS compatibility. Built for stores.</p>
                 <span class="feature-badge feature-badge--pro">Pro</span>
             </div>
             <div class="feature-card" style="border: 2px solid var(--primary); background: #f0f5ff;">
-                <span class="icon">&#128295;</span>
+                <span class="icon" aria-hidden="true">&#128295;</span>
                 <h3>One-Click Auto-Fix</h3>
                 <p>Don't just detect conflicts &mdash; <strong>fix them automatically</strong>. Generates mu-plugin patches that adjust hook priorities, dequeue duplicate scripts, and guard against fatal errors. Fully reversible.</p>
                 <span class="feature-badge feature-badge--pro">Pro</span>
             </div>
             <div class="feature-card">
-                <span class="icon">&#128230;</span>
+                <span class="icon" aria-hidden="true">&#128230;</span>
                 <h3>PHP Dependency Analysis</h3>
                 <p>Finds when two plugins bundle incompatible versions of Guzzle, Stripe, Carbon, or 10+ other libraries. The #1 cause of white screens nobody else catches.</p>
                 <span class="feature-badge feature-badge--pro">Pro</span>
             </div>
             <div class="feature-card">
-                <span class="icon">&#9000;</span>
+                <span class="icon" aria-hidden="true">&#9000;</span>
                 <h3>JavaScript Deep Analysis</h3>
                 <p>Scans JS files for global namespace pollution, jQuery version overrides, prototype modifications, and wp_localize_script collisions. Frontend conflicts made visible.</p>
                 <span class="feature-badge feature-badge--pro">Pro</span>
             </div>
             <div class="feature-card">
-                <span class="icon">&#128451;</span>
+                <span class="icon" aria-hidden="true">&#128451;</span>
                 <h3>Database Conflict Detection</h3>
                 <p>Detects plugins fighting over the same option keys, cron hooks, custom post types, taxonomies, and meta keys. Prevents silent data corruption.</p>
                 <span class="feature-badge feature-badge--pro">Pro</span>
             </div>
             <div class="feature-card">
-                <span class="icon">&#128187;</span>
+                <span class="icon" aria-hidden="true">&#128187;</span>
                 <h3>WP-CLI Integration</h3>
                 <p>Full command-line scanning for developers. Run conflict detection in CI/CD pipelines, automate scans, and get JSON output for build gates.</p>
                 <span class="feature-badge feature-badge--pro">Pro</span>
             </div>
             <div class="feature-card">
-                <span class="icon">&#127760;</span>
+                <span class="icon" aria-hidden="true">&#127760;</span>
                 <h3>Cloud Conflict Intelligence</h3>
                 <p>Instant results powered by anonymized community data. Before running local scans, checks a global conflict database for already-known issues between your plugins.</p>
             </div>
@@ -445,42 +518,42 @@
         <p>The only conflict detector that understands WooCommerce internals. Protects your revenue where it matters most.</p>
         <div class="woo-grid">
             <div class="woo-item">
-                <div class="icon">&#128179;</div>
+                <div class="icon" aria-hidden="true">&#128179;</div>
                 <div>
                     <h4>Payment Gateway Conflicts</h4>
                     <p>Detects when multiple gateways interfere with checkout processing</p>
                 </div>
             </div>
             <div class="woo-item">
-                <div class="icon">&#128221;</div>
+                <div class="icon" aria-hidden="true">&#128221;</div>
                 <div>
                     <h4>Checkout Field Collisions</h4>
                     <p>Finds plugins that corrupt each other's checkout field modifications</p>
                 </div>
             </div>
             <div class="woo-item">
-                <div class="icon">&#128200;</div>
+                <div class="icon" aria-hidden="true">&#128200;</div>
                 <div>
                     <h4>Cart Calculation Interference</h4>
                     <p>Catches hooks that produce incorrect totals, fees, or tax calculations</p>
                 </div>
             </div>
             <div class="woo-item">
-                <div class="icon">&#128196;</div>
+                <div class="icon" aria-hidden="true">&#128196;</div>
                 <div>
                     <h4>Template Override Conflicts</h4>
                     <p>Detects when two plugins override the same WooCommerce template file</p>
                 </div>
             </div>
             <div class="woo-item">
-                <div class="icon">&#128451;</div>
+                <div class="icon" aria-hidden="true">&#128451;</div>
                 <div>
                     <h4>HPOS Compatibility</h4>
                     <p>Flags plugins using legacy post-meta order queries incompatible with HPOS</p>
                 </div>
             </div>
             <div class="woo-item">
-                <div class="icon">&#128260;</div>
+                <div class="icon" aria-hidden="true">&#128260;</div>
                 <div>
                     <h4>Pre-Update Simulation</h4>
                     <p>Tests new plugin versions against your stack before you click "Update"</p>
@@ -530,7 +603,7 @@
                     <li>50 scan history</li>
                     <li>Priority support</li>
                 </ul>
-                <a href="#" class="btn btn-primary">Start Free Trial</a>
+                <a href="https://wordpress.org/plugins/jetstrike-conflict-detector/" class="btn btn-primary">Start Free Trial</a>
             </div>
 
             <div class="price-card">
@@ -547,7 +620,7 @@
                     <li>White-label reports</li>
                     <li>Manage unlimited sites</li>
                 </ul>
-                <a href="#" class="btn btn-outline">Get Agency</a>
+                <a href="https://wordpress.org/plugins/jetstrike-conflict-detector/" class="btn btn-outline">Get Agency</a>
             </div>
         </div>
     </div>
@@ -564,9 +637,28 @@
 
 <footer>
     <div class="container">
-        <p>&copy; 2026 Jetstrike. All rights reserved. | <a href="/privacy" style="color:inherit">Privacy Policy</a> | <a href="/terms" style="color:inherit">Terms</a></p>
+        <p>&copy; 2026 Jetstrike. All rights reserved. | <a href="https://jetstrike.io/privacy" style="color:inherit">Privacy Policy</a> | <a href="https://jetstrike.io/terms" style="color:inherit">Terms</a></p>
     </div>
 </footer>
+
+<script>
+(function() {
+    var toggle = document.querySelector('.nav-toggle');
+    var menu = document.getElementById('nav-menu');
+    if (!toggle || !menu) return;
+    toggle.addEventListener('click', function() {
+        var expanded = toggle.getAttribute('aria-expanded') === 'true';
+        toggle.setAttribute('aria-expanded', String(!expanded));
+        menu.classList.toggle('is-open');
+    });
+    menu.querySelectorAll('a').forEach(function(link) {
+        link.addEventListener('click', function() {
+            toggle.setAttribute('aria-expanded', 'false');
+            menu.classList.remove('is-open');
+        });
+    });
+})();
+</script>
 
 </body>
 </html>
