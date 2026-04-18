@@ -37,6 +37,9 @@
             $(document).on('click', '#jetstrike-export-data', this.exportData.bind(this));
             $(document).on('click', '#jetstrike-toggle-matrix', this.toggleMatrix.bind(this));
 
+            // Health check buttons.
+            $(document).on('click', '.jetstrike-cd-health-btn', this.runHealthCheck.bind(this));
+
             // Import data.
             $(document).on('click', '#jetstrike-import-data', this.importData.bind(this));
             $(document).on('change', '#jetstrike-import-file', this.handleImportFile.bind(this));
@@ -565,6 +568,89 @@
             } else {
                 $btn.removeClass('button-primary');
             }
+        },
+
+        // ── Health Checks ─────────────────────────────────────
+
+        runHealthCheck: function (e) {
+            e.preventDefault();
+            var $btn = $(e.currentTarget);
+            var checkType = $btn.data('check');
+            var actionMap = {
+                plugin_health: 'jetstrike_cd_plugin_health',
+                db_health: 'jetstrike_cd_db_health',
+                php_compat: 'jetstrike_cd_php_compat'
+            };
+            var labelMap = {
+                plugin_health: 'Plugin Health',
+                db_health: 'Database Health',
+                php_compat: 'PHP Compatibility'
+            };
+
+            var action = actionMap[checkType];
+            if (!action) return;
+
+            $btn.prop('disabled', true).html('<span class="jetstrike-cd-spinner"></span> Analyzing...');
+
+            $.ajax({
+                url: jetstrikeCD.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: action,
+                    nonce: jetstrikeCD.ajaxNonce
+                },
+                success: function (response) {
+                    $btn.prop('disabled', false).html($btn.html().replace('Analyzing...', labelMap[checkType]));
+                    JetstrikeCD.resetHealthButton($btn, checkType, labelMap[checkType]);
+
+                    if (response.success) {
+                        var data = response.data;
+                        var msg = '';
+
+                        if (checkType === 'plugin_health') {
+                            msg = 'Plugin Health: ' + (data.summary.healthy || 0) + ' healthy, ' +
+                                (data.summary.abandoned || 0) + ' abandoned, ' +
+                                (data.summary.stale || 0) + ' stale, ' +
+                                (data.summary.vulnerable || 0) + ' vulnerable. ' +
+                                (data.issues ? data.issues.length : 0) + ' total issue(s).';
+                        } else if (checkType === 'db_health') {
+                            msg = 'Database Health Score: ' + (data.score || 0) + '/100. ' +
+                                (data.issues ? data.issues.length : 0) + ' issue(s) found. ' +
+                                'Total DB size: ' + (data.stats.total_db_mb || 0) + 'MB.';
+                        } else if (checkType === 'php_compat') {
+                            msg = 'PHP Compatibility (PHP ' + (data.target_php || '') + '): ' +
+                                (data.summary.clean || 0) + ' compatible, ' +
+                                (data.summary.warnings || 0) + ' with warnings, ' +
+                                (data.summary.errors || 0) + ' incompatible.';
+                        }
+
+                        var severity = 'success';
+                        if ((data.summary && (data.summary.errors > 0 || data.summary.abandoned > 0 || data.summary.vulnerable > 0)) ||
+                            (data.score !== undefined && data.score < 50)) {
+                            severity = 'warning';
+                        }
+
+                        JetstrikeCD.showNotice(severity, msg);
+                    } else {
+                        JetstrikeCD.showNotice('error', response.data.message || 'Analysis failed.');
+                    }
+                },
+                error: function () {
+                    JetstrikeCD.resetHealthButton($btn, checkType, labelMap[checkType]);
+                    JetstrikeCD.showNotice('error', labelMap[checkType] + ' analysis failed.');
+                }
+            });
+        },
+
+        resetHealthButton: function ($btn, checkType, label) {
+            var iconMap = {
+                plugin_health: 'plugins-checked',
+                db_health: 'database',
+                php_compat: 'editor-code'
+            };
+            $btn.prop('disabled', false).html(
+                '<span class="dashicons dashicons-' + (iconMap[checkType] || 'admin-generic') + '"></span> ' + label
+            );
         },
 
         // ── Import Data ──────────────────────────────────────
