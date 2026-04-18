@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WooCommerce Conflict Audit — Sample Report</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1e293b; line-height: 1.6; max-width: 900px; margin: 0 auto; padding: 40px 24px; background: #fff; }
+.report-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 24px; border-bottom: 2px solid #2563eb; margin-bottom: 32px; }
+.report-brand { font-size: 28px; font-weight: 800; color: #2563eb; letter-spacing: -0.5px; }
+.report-brand small { display: block; font-size: 12px; font-weight: 400; color: #64748b; letter-spacing: 1px; text-transform: uppercase; }
+.report-meta { text-align: right; }
+.report-meta h1 { font-size: 20px; font-weight: 600; }
+.report-meta p { color: #64748b; font-size: 13px; }
+.executive-summary { background: #f0f7ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 24px; margin-bottom: 32px; }
+.executive-summary h2 { font-size: 16px; font-weight: 700; color: #1e40af; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+.executive-summary p { font-size: 15px; color: #334155; }
+.executive-summary .highlight { color: #dc2626; font-weight: 700; }
+.section { margin-bottom: 32px; }
+.section h2 { font-size: 18px; font-weight: 600; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0; }
+.health-banner { display: flex; align-items: center; gap: 20px; padding: 20px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #f97316; }
+.health-grade { width: 64px; height: 64px; border-radius: 50%; background: #f97316; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: 700; flex-shrink: 0; }
+.health-info h3 { font-size: 18px; font-weight: 600; }
+.health-info p { color: #64748b; margin-top: 4px; font-size: 14px; }
+.summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 16px; }
+.summary-card { text-align: center; padding: 16px; border-radius: 8px; background: #f8fafc; }
+.summary-card.critical { border-left: 3px solid #ef4444; }
+.summary-card.high { border-left: 3px solid #f97316; }
+.summary-card.medium { border-left: 3px solid #eab308; }
+.summary-card.low { border-left: 3px solid #3b82f6; }
+.summary-count { font-size: 36px; font-weight: 700; }
+.summary-card.critical .summary-count { color: #ef4444; }
+.summary-card.high .summary-count { color: #f97316; }
+.summary-card.medium .summary-count { color: #eab308; }
+.summary-card.low .summary-count { color: #3b82f6; }
+.summary-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #64748b; }
+table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
+th { background: #f8fafc; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #475569; }
+.status-conflict { color: #ef4444; font-weight: 600; }
+.status-clean { color: #22c55e; font-weight: 600; }
+.conflict-card { padding: 16px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #e2e8f0; border-left: 4px solid; page-break-inside: avoid; }
+.conflict-card.critical { border-left-color: #ef4444; background: #fef2f2; }
+.conflict-card.high { border-left-color: #f97316; background: #fff7ed; }
+.conflict-card.medium { border-left-color: #eab308; background: #fefce8; }
+.conflict-card.low { border-left-color: #3b82f6; background: #eff6ff; }
+.conflict-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+.badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; color: #fff; }
+.badge.critical { background: #ef4444; }
+.badge.high { background: #f97316; }
+.badge.medium { background: #eab308; }
+.badge.low { background: #3b82f6; }
+.badge.fixable { background: #2563eb; margin-left: auto; }
+.conflict-type { font-size: 13px; color: #64748b; text-transform: capitalize; }
+.conflict-desc { font-size: 14px; margin-bottom: 8px; }
+.conflict-plugins { margin-bottom: 8px; }
+.conflict-plugins code { background: #f1f5f9; padding: 2px 6px; border-radius: 3px; font-size: 13px; }
+.recommendation { font-size: 13px; color: #475569; padding: 10px 12px; background: #fff; border-radius: 4px; border: 1px solid #e2e8f0; margin-top: 8px; }
+.recommendation strong { color: #1e293b; }
+.next-steps { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 24px; }
+.next-steps h2 { color: #166534; border: 0; padding: 0; margin-bottom: 12px; }
+.next-steps ol { padding-left: 20px; }
+.next-steps li { margin-bottom: 8px; font-size: 14px; }
+.next-steps .urgent { background: #fef2f2; border: 1px solid #fecaca; border-radius: 4px; padding: 12px; margin-top: 16px; }
+.next-steps .urgent strong { color: #dc2626; }
+.cost-box { background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 20px; margin-top: 24px; }
+.cost-box h3 { font-size: 16px; color: #92400e; margin-bottom: 8px; }
+.cost-box p { font-size: 14px; color: #78350f; }
+.footer { text-align: center; padding-top: 24px; border-top: 1px solid #e2e8f0; color: #94a3b8; font-size: 13px; margin-top: 40px; }
+.footer a { color: #2563eb; text-decoration: none; }
+.watermark { background: #fef3c7; color: #92400e; text-align: center; padding: 8px; border-radius: 4px; font-size: 12px; font-weight: 600; margin-bottom: 24px; }
+@media print { body { padding: 20px; } .watermark { display: none; } }
+@media (max-width: 600px) { .summary-grid { grid-template-columns: repeat(2, 1fr); } .report-header { flex-direction: column; text-align: center; } .report-meta { text-align: center; } .health-banner { flex-direction: column; text-align: center; } }
+</style>
+</head>
+<body>
+
+<div class="watermark">SAMPLE REPORT — Replace with actual client data</div>
+
+<div class="report-header">
+    <div class="report-brand">
+        Jetstrike
+        <small>Conflict Detector</small>
+    </div>
+    <div class="report-meta">
+        <h1>WooCommerce Conflict Audit</h1>
+        <p>Prepared for: <strong>Acme Outdoor Gear</strong></p>
+        <p>Site: https://acmeoutdoorgear.com</p>
+        <p>Date: April 16, 2026</p>
+        <p>Auditor: [Your Name]</p>
+    </div>
+</div>
+
+<div class="executive-summary">
+    <h2>Executive Summary</h2>
+    <p>
+        Your store has <strong>27 active plugins</strong>. Our scan detected
+        <span class="highlight">11 plugin conflicts</span>, including
+        <span class="highlight">2 critical issues</span> that pose an immediate risk to
+        your checkout flow and could cause order failures during peak traffic.
+        We also found 3 high-severity conflicts and 6 medium/low issues that
+        may degrade performance or cause intermittent errors.
+    </p>
+    <p style="margin-top: 8px;">
+        <strong>Estimated revenue at risk:</strong> Based on your reported monthly revenue of ~$45,000
+        and the nature of the critical conflicts (checkout interference), an unresolved failure during
+        peak hours could cost <span class="highlight">$1,500–$4,500 per incident</span> in lost orders
+        and abandoned carts.
+    </p>
+</div>
+
+<div class="section">
+    <h2>Site Health Score</h2>
+    <div class="health-banner">
+        <div class="health-grade">D</div>
+        <div class="health-info">
+            <h3>Health Score: 38 / 100</h3>
+            <p>Poor — significant conflicts require immediate attention. Your checkout and payment flows are at risk.</p>
+        </div>
+    </div>
+    <div class="summary-grid">
+        <div class="summary-card critical">
+            <div class="summary-count">2</div>
+            <div class="summary-label">Critical</div>
+        </div>
+        <div class="summary-card high">
+            <div class="summary-count">3</div>
+            <div class="summary-label">High</div>
+        </div>
+        <div class="summary-card medium">
+            <div class="summary-count">4</div>
+            <div class="summary-label">Medium</div>
+        </div>
+        <div class="summary-card low">
+            <div class="summary-count">2</div>
+            <div class="summary-label">Low</div>
+        </div>
+    </div>
+</div>
+
+<div class="section">
+    <h2>Active Plugins (27)</h2>
+    <table>
+        <thead><tr><th>Plugin</th><th>Version</th><th>Status</th></tr></thead>
+        <tbody>
+            <tr><td><strong>WooCommerce</strong></td><td>9.5.1</td><td class="status-conflict">3 conflicts</td></tr>
+            <tr><td><strong>WooCommerce Stripe Gateway</strong></td><td>8.2.0</td><td class="status-conflict">2 conflicts</td></tr>
+            <tr><td><strong>WooPayments</strong></td><td>8.4.0</td><td class="status-conflict">1 conflict</td></tr>
+            <tr><td><strong>Elementor Pro</strong></td><td>3.21.0</td><td class="status-conflict">2 conflicts</td></tr>
+            <tr><td><strong>Yoast SEO</strong></td><td>23.8</td><td class="status-clean">Clean</td></tr>
+            <tr><td><strong>WPForms Lite</strong></td><td>1.9.1</td><td class="status-clean">Clean</td></tr>
+            <tr><td><strong>MailPoet</strong></td><td>4.58.0</td><td class="status-conflict">1 conflict</td></tr>
+            <tr><td><strong>WP Rocket</strong></td><td>3.17</td><td class="status-conflict">1 conflict</td></tr>
+            <tr><td><strong>Wordfence Security</strong></td><td>7.11.5</td><td class="status-clean">Clean</td></tr>
+            <tr><td><strong>CartFlows</strong></td><td>2.0.9</td><td class="status-conflict">2 conflicts</td></tr>
+            <tr><td><strong>Custom Order Status Manager</strong></td><td>1.4.2</td><td class="status-conflict">1 conflict</td></tr>
+            <tr><td colspan="3" style="color: #64748b; font-style: italic;">+ 16 more plugins (all clean)</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="section">
+    <h2>Conflict Details (11 found)</h2>
+
+    <!-- Critical 1 -->
+    <div class="conflict-card critical">
+        <div class="conflict-header">
+            <span class="badge critical">CRITICAL</span>
+            <span class="conflict-type">Payment Gateway Conflict</span>
+            <span class="badge fixable">Fixable</span>
+        </div>
+        <div class="conflict-desc">
+            Both WooCommerce Stripe Gateway and WooPayments register payment handlers on the
+            <code>woocommerce_payment_gateways</code> hook at priority 10. During checkout, Stripe's
+            intent creation can be overridden by WooPayments' handler, causing intermittent
+            "Payment processing failed" errors — especially under concurrent requests during sales events.
+        </div>
+        <div class="conflict-plugins">
+            <code>woocommerce-gateway-stripe</code> vs <code>woocommerce-payments</code>
+        </div>
+        <div class="recommendation">
+            <strong>Recommendation:</strong> Adjust the hook priority of WooPayments' gateway registration
+            to priority 20, or deactivate one of the two gateways if you're only using one payment processor.
+            If both are needed for different currencies, a priority-separation patch resolves this cleanly.
+        </div>
+    </div>
+
+    <!-- Critical 2 -->
+    <div class="conflict-card critical">
+        <div class="conflict-header">
+            <span class="badge critical">CRITICAL</span>
+            <span class="conflict-type">Checkout Field Conflict</span>
+            <span class="badge fixable">Fixable</span>
+        </div>
+        <div class="conflict-desc">
+            CartFlows overrides WooCommerce checkout fields via <code>woocommerce_checkout_fields</code>
+            at priority 10. Elementor Pro's checkout widget hooks the same filter at the same priority,
+            causing CartFlows' custom fields to be silently dropped on pages built with Elementor.
+            Customers on those pages see a broken checkout form.
+        </div>
+        <div class="conflict-plugins">
+            <code>cartflows</code> vs <code>elementor-pro</code>
+        </div>
+        <div class="recommendation">
+            <strong>Recommendation:</strong> Move CartFlows' checkout field filter to priority 20 so it
+            runs after Elementor Pro's modifications. This preserves both plugins' functionality.
+            A one-line mu-plugin patch resolves this permanently.
+        </div>
+    </div>
+
+    <!-- High 1 -->
+    <div class="conflict-card high">
+        <div class="conflict-header">
+            <span class="badge high">HIGH</span>
+            <span class="conflict-type">Script Collision</span>
+            <span class="badge fixable">Fixable</span>
+        </div>
+        <div class="conflict-desc">
+            Both Elementor Pro and CartFlows enqueue a script with the handle <code>flatpickr</code>.
+            Elementor loads v4.6.13 while CartFlows loads v4.6.9. On pages where both load, the older
+            version sometimes wins, causing Elementor's date picker to malfunction.
+        </div>
+        <div class="conflict-plugins">
+            <code>elementor-pro</code> vs <code>cartflows</code>
+        </div>
+        <div class="recommendation">
+            <strong>Recommendation:</strong> Dequeue CartFlows' older flatpickr and let Elementor's
+            newer version serve both plugins. Verified compatible.
+        </div>
+    </div>
+
+    <!-- High 2 -->
+    <div class="conflict-card high">
+        <div class="conflict-header">
+            <span class="badge high">HIGH</span>
+            <span class="conflict-type">Dependency Version Conflict</span>
+        </div>
+        <div class="conflict-desc">
+            WooCommerce Stripe Gateway bundles <code>stripe/stripe-php</code> v13.2.0 while
+            MailPoet bundles v10.21.0. Both are loaded without namespace prefixing. Depending on
+            plugin load order, API calls may use the wrong SDK version, causing intermittent
+            Stripe API errors ("Unexpected API version").
+        </div>
+        <div class="conflict-plugins">
+            <code>woocommerce-gateway-stripe</code> vs <code>mailpoet</code>
+        </div>
+        <div class="recommendation">
+            <strong>Recommendation:</strong> Contact MailPoet support to request they namespace-prefix
+            their Stripe SDK (this is a known issue). In the meantime, ensure WooCommerce Stripe Gateway
+            loads before MailPoet by adjusting plugin load order.
+        </div>
+    </div>
+
+    <!-- High 3 -->
+    <div class="conflict-card high">
+        <div class="conflict-header">
+            <span class="badge high">HIGH</span>
+            <span class="conflict-type">Performance Degradation</span>
+        </div>
+        <div class="conflict-desc">
+            When WP Rocket and Custom Order Status Manager are both active, the WooCommerce orders page
+            takes 4.7 seconds to load (baseline: 1.2 seconds). Custom Order Status Manager runs
+            unindexed queries on <code>wp_posts</code> to count orders per status, and WP Rocket's
+            database optimization cron compounds the issue by locking the table.
+        </div>
+        <div class="conflict-plugins">
+            <code>wp-rocket</code> vs <code>custom-order-status-manager</code>
+        </div>
+        <div class="recommendation">
+            <strong>Recommendation:</strong> Add an index on <code>post_status</code> in the orders table
+            and schedule WP Rocket's database optimization outside business hours. With HPOS enabled,
+            this issue resolves entirely.
+        </div>
+    </div>
+
+    <!-- Medium/Low summary -->
+    <div class="conflict-card medium">
+        <div class="conflict-header">
+            <span class="badge medium">MEDIUM</span>
+            <span class="conflict-type">4 additional medium-severity conflicts</span>
+        </div>
+        <div class="conflict-desc">
+            Including: duplicate jQuery enqueue (Elementor vs theme), overlapping cron schedule
+            (MailPoet vs WP Rocket cleanup), shared transient key collision (CartFlows vs WooCommerce
+            session cache), and a global <code>$options</code> variable conflict between two plugins.
+            Full details available upon request.
+        </div>
+    </div>
+
+    <div class="conflict-card low">
+        <div class="conflict-header">
+            <span class="badge low">LOW</span>
+            <span class="conflict-type">2 additional low-severity conflicts</span>
+        </div>
+        <div class="conflict-desc">
+            Minor REST API namespace overlap and a duplicate text-domain warning. No functional impact
+            but worth cleaning up for best practices.
+        </div>
+    </div>
+</div>
+
+<div class="section next-steps">
+    <h2>Recommended Next Steps</h2>
+    <ol>
+        <li><strong>Immediate (this week):</strong> Fix the 2 critical payment/checkout conflicts. These directly affect your ability to process orders.</li>
+        <li><strong>This month:</strong> Resolve the 3 high-severity issues — the Stripe SDK version conflict and script collision can both cause intermittent customer-facing errors.</li>
+        <li><strong>Ongoing:</strong> Set up monthly conflict monitoring. Every plugin update introduces the risk of new conflicts. Proactive scanning catches issues before customers do.</li>
+    </ol>
+
+    <div class="urgent">
+        <strong>Revenue impact estimate:</strong> The two critical checkout/payment conflicts affect
+        approximately 8–15% of checkout attempts. At your current order volume, resolving these
+        could recover an estimated $3,600–$6,700/month in otherwise-lost revenue from failed
+        payments and abandoned carts.
+    </div>
+</div>
+
+<div class="cost-box">
+    <h3>Fix Implementation Available</h3>
+    <p>
+        I can resolve all critical and high-severity conflicts this week with reversible, production-safe
+        patches. Each fix is tested in isolation before deployment and can be rolled back with one click.
+    </p>
+    <p style="margin-top: 8px;">
+        <strong>Conflict Resolution Package:</strong> $1,997 (covers all 5 critical + high issues, plus one month of monitoring to verify stability)
+    </p>
+    <p style="margin-top: 8px;">
+        <strong>Monthly Health Monitoring:</strong> $497/month — continuous scanning, proactive alerts before updates, and immediate resolution of any new conflicts.
+    </p>
+</div>
+
+<div class="footer">
+    <p>Generated by <strong>Jetstrike Conflict Detector</strong></p>
+    <p style="margin-top: 4px;">Confidential — prepared exclusively for Acme Outdoor Gear</p>
+</div>
+
+</body>
+</html>

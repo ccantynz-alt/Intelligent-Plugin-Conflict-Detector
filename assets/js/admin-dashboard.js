@@ -35,6 +35,21 @@
             $(document).on('click', '#jetstrike-activate-license', this.activateLicense.bind(this));
             $(document).on('click', '#jetstrike-deactivate-license', this.deactivateLicense.bind(this));
 
+            // Toolbar actions.
+            $(document).on('click', '#jetstrike-generate-report', this.generateReport.bind(this));
+            $(document).on('click', '#jetstrike-export-data', this.exportData.bind(this));
+            $(document).on('click', '#jetstrike-toggle-matrix', this.toggleMatrix.bind(this));
+
+            // Health check buttons.
+            $(document).on('click', '.jetstrike-cd-health-btn', this.runHealthCheck.bind(this));
+
+            // Import data.
+            $(document).on('click', '#jetstrike-import-data', this.importData.bind(this));
+            $(document).on('change', '#jetstrike-import-file', this.handleImportFile.bind(this));
+
+            // Pre-update check.
+            $(document).on('click', '.jetstrike-cd-preupdate-btn', this.preUpdateCheck.bind(this));
+
             // Settings form.
             $(document).on('click', '#jetstrike-save-settings', this.saveSettings.bind(this));
 
@@ -203,14 +218,30 @@
                 }
                 autoFixCell += '</td>';
 
+                var descriptionHtml = '';
+                if (conflict.ai_explanation) {
+                    descriptionHtml = '<strong>' + JetstrikeCD.escapeHtml(conflict.ai_explanation) + '</strong>';
+                    if (conflict.ai_impact) {
+                        descriptionHtml += '<br><span style="color: #b91c1c; font-weight: 600;">' +
+                            JetstrikeCD.escapeHtml(conflict.ai_impact) + '</span>';
+                    }
+                    descriptionHtml += '<br><em style="color: #94a3b8; font-size: 12px;">Technical: ' +
+                        JetstrikeCD.escapeHtml(conflict.description) + '</em>';
+                } else {
+                    descriptionHtml = '<strong>' + JetstrikeCD.escapeHtml(conflict.description) + '</strong>';
+                }
+
+                if (conflict.recommendation) {
+                    descriptionHtml += '<br><em class="jetstrike-cd-recommendation">' +
+                        JetstrikeCD.escapeHtml(conflict.recommendation) + '</em>';
+                }
+
                 $table.append(
                     '<tr data-conflict-id="' + conflict.id + '">' +
                     '<td><span class="jetstrike-cd-badge jetstrike-cd-badge--' + conflict.severity + '">' +
                         JetstrikeCD.capitalize(conflict.severity) + '</span></td>' +
                     '<td>' + JetstrikeCD.escapeHtml(conflict.conflict_type.replace(/_/g, ' ')) + '</td>' +
-                    '<td><strong>' + JetstrikeCD.escapeHtml(conflict.description) + '</strong>' +
-                        (conflict.recommendation ? '<br><em class="jetstrike-cd-recommendation">' +
-                        JetstrikeCD.escapeHtml(conflict.recommendation) + '</em>' : '') + '</td>' +
+                    '<td>' + descriptionHtml + '</td>' +
                     '<td><code>' + JetstrikeCD.escapeHtml(JetstrikeCD.dirname(conflict.plugin_a)) + '</code>' +
                         pluginB + '</td>' +
                     autoFixCell +
@@ -478,6 +509,269 @@
             });
         },
 
+        // ── Toolbar Actions ───────────────────────────────────
+
+        generateReport: function (e) {
+            e.preventDefault();
+            var $btn = $(e.currentTarget);
+            $btn.prop('disabled', true).html('<span class="jetstrike-cd-spinner"></span> Generating...');
+
+            $.ajax({
+                url: jetstrikeCD.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'jetstrike_cd_generate_report',
+                    nonce: jetstrikeCD.ajaxNonce
+                },
+                success: function (response) {
+                    $btn.prop('disabled', false).html('<span class="dashicons dashicons-media-document"></span> Generate Report');
+
+                    if (response.success) {
+                        // Open report in new window.
+                        var win = window.open('', '_blank');
+                        win.document.write(response.data.html);
+                        win.document.close();
+                        JetstrikeCD.showNotice('success', 'Report generated. A new window has opened with the report.');
+                    } else {
+                        JetstrikeCD.showNotice('error', response.data.message || 'Failed to generate report.');
+                    }
+                },
+                error: function () {
+                    $btn.prop('disabled', false).html('<span class="dashicons dashicons-media-document"></span> Generate Report');
+                    JetstrikeCD.showNotice('error', 'Failed to generate report.');
+                }
+            });
+        },
+
+        exportData: function (e) {
+            e.preventDefault();
+            var $btn = $(e.currentTarget);
+            $btn.prop('disabled', true).html('<span class="jetstrike-cd-spinner"></span> Exporting...');
+
+            $.ajax({
+                url: jetstrikeCD.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'jetstrike_cd_export_data',
+                    nonce: jetstrikeCD.ajaxNonce,
+                    include_scans: true
+                },
+                success: function (response) {
+                    $btn.prop('disabled', false).html('<span class="dashicons dashicons-download"></span> Export Data');
+
+                    if (response.success) {
+                        // Trigger file download.
+                        var blob = new Blob([response.data.json], { type: 'application/json' });
+                        var url = URL.createObjectURL(blob);
+                        var a = document.createElement('a');
+                        a.href = url;
+                        a.download = response.data.filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+
+                        JetstrikeCD.showNotice('success',
+                            'Exported ' + response.data.stats.conflicts + ' conflict(s) and ' +
+                            response.data.stats.plugins + ' plugin(s).');
+                    } else {
+                        JetstrikeCD.showNotice('error', response.data.message || 'Export failed.');
+                    }
+                },
+                error: function () {
+                    $btn.prop('disabled', false).html('<span class="dashicons dashicons-download"></span> Export Data');
+                    JetstrikeCD.showNotice('error', 'Export failed.');
+                }
+            });
+        },
+
+        toggleMatrix: function (e) {
+            e.preventDefault();
+            var $container = $('#jetstrike-matrix-container');
+            $container.slideToggle(300);
+
+            var $btn = $(e.currentTarget);
+            if ($container.is(':visible')) {
+                $btn.addClass('button-primary');
+            } else {
+                $btn.removeClass('button-primary');
+            }
+        },
+
+        // ── Health Checks ─────────────────────────────────────
+
+        runHealthCheck: function (e) {
+            e.preventDefault();
+            var $btn = $(e.currentTarget);
+            var checkType = $btn.data('check');
+            var actionMap = {
+                plugin_health: 'jetstrike_cd_plugin_health',
+                db_health: 'jetstrike_cd_db_health',
+                php_compat: 'jetstrike_cd_php_compat'
+            };
+            var labelMap = {
+                plugin_health: 'Plugin Health',
+                db_health: 'Database Health',
+                php_compat: 'PHP Compatibility'
+            };
+
+            var action = actionMap[checkType];
+            if (!action) return;
+
+            $btn.prop('disabled', true).html('<span class="jetstrike-cd-spinner"></span> Analyzing...');
+
+            $.ajax({
+                url: jetstrikeCD.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: action,
+                    nonce: jetstrikeCD.ajaxNonce
+                },
+                success: function (response) {
+                    $btn.prop('disabled', false).html($btn.html().replace('Analyzing...', labelMap[checkType]));
+                    JetstrikeCD.resetHealthButton($btn, checkType, labelMap[checkType]);
+
+                    if (response.success) {
+                        var data = response.data;
+                        var msg = '';
+
+                        if (checkType === 'plugin_health') {
+                            msg = 'Plugin Health: ' + (data.summary.healthy || 0) + ' healthy, ' +
+                                (data.summary.abandoned || 0) + ' abandoned, ' +
+                                (data.summary.stale || 0) + ' stale, ' +
+                                (data.summary.vulnerable || 0) + ' vulnerable. ' +
+                                (data.issues ? data.issues.length : 0) + ' total issue(s).';
+                        } else if (checkType === 'db_health') {
+                            msg = 'Database Health Score: ' + (data.score || 0) + '/100. ' +
+                                (data.issues ? data.issues.length : 0) + ' issue(s) found. ' +
+                                'Total DB size: ' + (data.stats.total_db_mb || 0) + 'MB.';
+                        } else if (checkType === 'php_compat') {
+                            msg = 'PHP Compatibility (PHP ' + (data.target_php || '') + '): ' +
+                                (data.summary.clean || 0) + ' compatible, ' +
+                                (data.summary.warnings || 0) + ' with warnings, ' +
+                                (data.summary.errors || 0) + ' incompatible.';
+                        }
+
+                        var severity = 'success';
+                        if ((data.summary && (data.summary.errors > 0 || data.summary.abandoned > 0 || data.summary.vulnerable > 0)) ||
+                            (data.score !== undefined && data.score < 50)) {
+                            severity = 'warning';
+                        }
+
+                        JetstrikeCD.showNotice(severity, msg);
+                    } else {
+                        JetstrikeCD.showNotice('error', response.data.message || 'Analysis failed.');
+                    }
+                },
+                error: function () {
+                    JetstrikeCD.resetHealthButton($btn, checkType, labelMap[checkType]);
+                    JetstrikeCD.showNotice('error', labelMap[checkType] + ' analysis failed.');
+                }
+            });
+        },
+
+        resetHealthButton: function ($btn, checkType, label) {
+            var iconMap = {
+                plugin_health: 'plugins-checked',
+                db_health: 'database',
+                php_compat: 'editor-code'
+            };
+            $btn.prop('disabled', false).html(
+                '<span class="dashicons dashicons-' + (iconMap[checkType] || 'admin-generic') + '"></span> ' + label
+            );
+        },
+
+        // ── Import Data ──────────────────────────────────────
+
+        importData: function (e) {
+            e.preventDefault();
+            $('#jetstrike-import-file').click();
+        },
+
+        handleImportFile: function (e) {
+            var file = e.target.files[0];
+            if (!file) return;
+
+            var reader = new FileReader();
+            reader.onload = function (evt) {
+                var json;
+                try {
+                    json = evt.target.result;
+                    JSON.parse(json); // Validate JSON.
+                } catch (err) {
+                    JetstrikeCD.showNotice('error', 'Invalid JSON file. Please select a valid Jetstrike export file.');
+                    return;
+                }
+
+                $.ajax({
+                    url: jetstrikeCD.ajaxUrl,
+                    type: 'POST',
+                    data: {
+                        action: 'jetstrike_cd_import_data',
+                        nonce: jetstrikeCD.ajaxNonce,
+                        import_data: json
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            JetstrikeCD.showNotice('success',
+                                'Imported ' + (response.data.imported || 0) + ' conflict(s). ' +
+                                (response.data.skipped || 0) + ' duplicate(s) skipped.');
+                            setTimeout(function () { window.location.reload(); }, 2000);
+                        } else {
+                            JetstrikeCD.showNotice('error', response.data.message || 'Import failed.');
+                        }
+                    },
+                    error: function () {
+                        JetstrikeCD.showNotice('error', 'Import failed. Please try again.');
+                    }
+                });
+            };
+            reader.readAsText(file);
+
+            // Reset the file input so the same file can be re-selected.
+            e.target.value = '';
+        },
+
+        // ── Pre-Update Check ─────────────────────────────────
+
+        preUpdateCheck: function (e) {
+            e.preventDefault();
+            var $btn = $(e.currentTarget);
+            var pluginFile = $btn.data('plugin');
+
+            if (!pluginFile) return;
+
+            $btn.prop('disabled', true).html('<span class="jetstrike-cd-spinner"></span> Checking...');
+
+            $.ajax({
+                url: jetstrikeCD.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'jetstrike_cd_pre_update_check',
+                    nonce: jetstrikeCD.ajaxNonce,
+                    plugin: pluginFile
+                },
+                success: function (response) {
+                    $btn.prop('disabled', false).html('<span class="dashicons dashicons-shield"></span> Pre-Update Check');
+
+                    if (response.success) {
+                        var data = response.data;
+                        var riskClass = data.risk_level === 'dangerous' ? 'error' :
+                                       (data.risk_level === 'risky' ? 'warning' : 'success');
+                        var msg = 'Risk Score: ' + data.risk_score + '/100 (' + data.risk_level + '). ' +
+                                  (data.new_conflicts || 0) + ' potential new conflict(s) detected.';
+                        JetstrikeCD.showNotice(riskClass, msg);
+                    } else {
+                        JetstrikeCD.showNotice('error', response.data.message || 'Pre-update check failed.');
+                    }
+                },
+                error: function () {
+                    $btn.prop('disabled', false).html('<span class="dashicons dashicons-shield"></span> Pre-Update Check');
+                    JetstrikeCD.showNotice('error', 'Pre-update check failed.');
+                }
+            });
+        },
+
         // ── Settings ──────────────────────────────────────────
 
         saveSettings: function (e) {
@@ -489,6 +783,7 @@
             // Checkboxes.
             settings.auto_scan_enabled = $form.find('[name="auto_scan_enabled"]').is(':checked');
             settings.email_alerts = $form.find('[name="email_alerts"]').is(':checked');
+            settings.autofix_beta_enabled = $form.find('[name="autofix_beta_enabled"]').is(':checked');
 
             // Text/select fields.
             settings.scan_frequency = $form.find('[name="scan_frequency"]').val();

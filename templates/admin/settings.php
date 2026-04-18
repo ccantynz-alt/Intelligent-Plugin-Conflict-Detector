@@ -167,6 +167,28 @@ $frequencies = [
                 </tr>
             </table>
 
+            <h2><?php esc_html_e('Auto-Fix Engine (Beta)', 'jetstrike-cd'); ?></h2>
+            <table class="form-table">
+                <tr>
+                    <th scope="row"><?php esc_html_e('Enable Auto-Fix', 'jetstrike-cd'); ?></th>
+                    <td>
+                        <label>
+                            <input type="checkbox" name="autofix_beta_enabled" value="1"
+                                <?php checked(get_option('jetstrike_cd_autofix_beta_enabled', 'no'), 'yes'); ?>
+                                <?php echo $tier === 'free' ? 'disabled' : ''; ?>>
+                            <?php esc_html_e('Enable the Auto-Fix Engine (beta)', 'jetstrike-cd'); ?>
+                        </label>
+                        <?php if ($tier === 'free'): ?>
+                            <p class="description jetstrike-cd-pro-badge"><?php esc_html_e('Pro feature', 'jetstrike-cd'); ?></p>
+                        <?php else: ?>
+                            <p class="description" style="color: #b45309;">
+                                <?php esc_html_e('Warning: Auto-Fix writes mu-plugin patch files to resolve conflicts. Each patch is individually reversible. A health check runs automatically after every fix — if your site becomes unreachable, the patch is removed immediately.', 'jetstrike-cd'); ?>
+                            </p>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+            </table>
+
             <h2><?php esc_html_e('Excluded Plugins', 'jetstrike-cd'); ?></h2>
             <table class="form-table">
                 <tr>

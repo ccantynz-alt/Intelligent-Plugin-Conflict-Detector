@@ -35,6 +35,28 @@ final class AutoResolver {
     /** Directory inside mu-plugins where patches live. */
     private const PATCH_DIR = 'jetstrike-patches';
 
+    /** Option key controlling whether the Auto-Fix beta is enabled. */
+    private const BETA_OPT_IN_KEY = 'jetstrike_cd_autofix_beta_enabled';
+
+    /**
+     * Is the Auto-Fix Engine enabled for this site?
+     *
+     * Auto-Fix ships as opt-in BETA in v1.x because it writes mu-plugin files
+     * that can, if a patch is malformed, affect every request on the site.
+     * Sites must either:
+     *   - Define JETSTRIKE_CD_AUTOFIX_ENABLED as true in wp-config.php, or
+     *   - Toggle the beta on from Settings (stores option 'yes').
+     *
+     * @return bool True if Auto-Fix may run.
+     */
+    public static function is_beta_enabled(): bool {
+        if (defined('JETSTRIKE_CD_AUTOFIX_ENABLED')) {
+            return (bool) constant('JETSTRIKE_CD_AUTOFIX_ENABLED');
+        }
+
+        return get_option(self::BETA_OPT_IN_KEY, 'no') === 'yes';
+    }
+
     public function __construct(Repository $repository) {
         $this->repository       = $repository;
         $this->hook_resolver    = new HookPriorityResolver();
@@ -49,6 +71,18 @@ final class AutoResolver {
      * @return array{success: bool, method: string, message: string, patch_file: string|null}
      */
     public function resolve(int $conflict_id): array {
+        // Refuse to run unless the Auto-Fix beta has been explicitly enabled.
+        // This protects customers from accidentally writing mu-plugin files
+        // during the beta period.
+        if (! self::is_beta_enabled()) {
+            return [
+                'success'    => false,
+                'method'     => 'beta_disabled',
+                'message'    => __('Auto-Fix is in beta and is disabled by default. Enable it from Settings → Auto-Fix (Beta) or define JETSTRIKE_CD_AUTOFIX_ENABLED in wp-config.php.', 'jetstrike-cd'),
+                'patch_file' => null,
+            ];
+        }
+
         $conflict = $this->repository->get_conflict($conflict_id);
 
         if ($conflict === null) {
@@ -66,21 +100,50 @@ final class AutoResolver {
         }
 
         // Dispatch to the appropriate resolver based on conflict type.
-        $result = match ($conflict->conflict_type) {
-            'hook_conflict'        => $this->resolve_hook_conflict($conflict, $details),
-            'resource_collision'   => $this->resolve_resource_collision($conflict, $details),
-            'function_redeclaration' => $this->resolve_function_conflict($conflict, $details),
-            'global_conflict'      => $this->resolve_global_conflict($conflict, $details),
-            default                => [
-                'success'    => false,
-                'method'     => 'unsupported',
-                'message'    => sprintf('Auto-fix is not available for "%s" conflicts. Manual intervention required.', $conflict->conflict_type),
-                'patch_file' => null,
-            ],
-        };
+        switch ($conflict->conflict_type) {
+            case 'hook_conflict':
+                $result = $this->resolve_hook_conflict($conflict, $details);
+                break;
+            case 'resource_collision':
+                $result = $this->resolve_resource_collision($conflict, $details);
+                break;
+            case 'function_redeclaration':
+                $result = $this->resolve_function_conflict($conflict, $details);
+                break;
+            case 'global_conflict':
+                $result = $this->resolve_global_conflict($conflict, $details);
+                break;
+            default:
+                $result = [
+                    'success'    => false,
+                    'method'     => 'unsupported',
+                    'message'    => sprintf('Auto-fix is not available for "%s" conflicts. Manual intervention required.', $conflict->conflict_type),
+                    'patch_file' => null,
+                ];
+                break;
+        }
 
-        // If resolved, update the conflict status.
-        if ($result['success']) {
+        // If the patch was written, verify the site still responds normally.
+        // If health verification fails, immediately roll back the patch so
+        // the customer is never left with a broken admin.
+        if ($result['success'] && ! empty($result['patch_file'])) {
+            $health = $this->verify_site_health();
+
+            if (! $health['ok']) {
+                $this->delete_patch_file((string) $result['patch_file']);
+
+                return [
+                    'success'    => false,
+                    'method'     => $result['method'],
+                    'message'    => sprintf(
+                        /* translators: %s: failure reason from the health check */
+                        __('Auto-Fix applied a patch but the post-apply health check failed (%s). The patch was automatically removed and the site was restored. Please resolve this conflict manually.', 'jetstrike-cd'),
+                        $health['reason']
+                    ),
+                    'patch_file' => null,
+                ];
+            }
+
             $this->repository->update_conflict($conflict_id, [
                 'status'      => 'resolved',
                 'resolved_at' => current_time('mysql', true),
@@ -91,6 +154,84 @@ final class AutoResolver {
         }
 
         return $result;
+    }
+
+    /**
+     * Verify the site is still healthy after a patch has been written.
+     *
+     * Issues a non-blocking loopback request to the home URL and a blocking
+     * request to the admin dashboard. If either returns a 5xx response or
+     * contains a fatal-error signature, health fails.
+     *
+     * @return array{ok: bool, reason: string}
+     */
+    private function verify_site_health(): array {
+        // Give PHP opcache a moment to pick up the new mu-plugin file.
+        if (function_exists('opcache_reset')) {
+            @opcache_reset();
+        }
+
+        $targets = [
+            home_url('/'),
+            admin_url('admin-ajax.php?action=heartbeat'),
+        ];
+
+        foreach ($targets as $url) {
+            $response = wp_remote_get($url, [
+                'timeout'     => 10,
+                'redirection' => 2,
+                'sslverify'   => false,
+                'blocking'    => true,
+                'headers'     => [
+                    'X-Jetstrike-Healthcheck' => '1',
+                ],
+            ]);
+
+            if (is_wp_error($response)) {
+                return [
+                    'ok'     => false,
+                    'reason' => sprintf('loopback request to %s failed: %s', $url, $response->get_error_message()),
+                ];
+            }
+
+            $code = (int) wp_remote_retrieve_response_code($response);
+            if ($code >= 500) {
+                return [
+                    'ok'     => false,
+                    'reason' => sprintf('HTTP %d from %s', $code, $url),
+                ];
+            }
+
+            $body = (string) wp_remote_retrieve_body($response);
+            if ($body !== '' && preg_match('/(Fatal error|Parse error|Cannot redeclare|Call to undefined)/i', $body)) {
+                return [
+                    'ok'     => false,
+                    'reason' => sprintf('PHP error detected in response from %s', $url),
+                ];
+            }
+        }
+
+        return ['ok' => true, 'reason' => ''];
+    }
+
+    /**
+     * Delete a patch file by filename (relative to the patch dir).
+     */
+    private function delete_patch_file(string $filename): void {
+        if ($filename === '') {
+            return;
+        }
+
+        $full_path = $this->get_patch_dir() . '/' . basename($filename);
+
+        if (file_exists($full_path)) {
+            wp_delete_file($full_path);
+        }
+
+        // Clear opcache for the removed file.
+        if (function_exists('opcache_invalidate')) {
+            @opcache_invalidate($full_path, true);
+        }
     }
 
     /**

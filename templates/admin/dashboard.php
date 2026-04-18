@@ -105,6 +105,22 @@ $grade_color = $grade_colors[$health['grade']] ?? '#6c757d';
                     <?php esc_html_e('Full Scan', 'jetstrike-cd'); ?>
                 </button>
             </div>
+            <?php if ($tier !== 'free'): ?>
+            <div class="jetstrike-cd-actions" style="margin-top: 12px; display: flex; gap: 8px;">
+                <button type="button" class="button jetstrike-cd-health-btn" data-check="plugin_health">
+                    <span class="dashicons dashicons-plugins-checked"></span>
+                    <?php esc_html_e('Plugin Health', 'jetstrike-cd'); ?>
+                </button>
+                <button type="button" class="button jetstrike-cd-health-btn" data-check="db_health">
+                    <span class="dashicons dashicons-database"></span>
+                    <?php esc_html_e('Database Health', 'jetstrike-cd'); ?>
+                </button>
+                <button type="button" class="button jetstrike-cd-health-btn" data-check="php_compat">
+                    <span class="dashicons dashicons-editor-code"></span>
+                    <?php esc_html_e('PHP Compat', 'jetstrike-cd'); ?>
+                </button>
+            </div>
+            <?php endif; ?>
             <?php if ($has_running): ?>
                 <div class="jetstrike-cd-scan-progress" id="jetstrike-scan-progress">
                     <div class="jetstrike-cd-progress-bar">
@@ -125,6 +141,39 @@ $grade_color = $grade_colors[$health['grade']] ?? '#6c757d';
                     )); ?>
                 </p>
             <?php endif; ?>
+        </div>
+    </div>
+
+    <!-- Toolbar: Report, Export, Matrix -->
+    <div class="jetstrike-cd-card jetstrike-cd-card--full">
+        <div class="jetstrike-cd-toolbar">
+            <button type="button" class="button" id="jetstrike-generate-report">
+                <span class="dashicons dashicons-media-document"></span>
+                <?php esc_html_e('Generate Report', 'jetstrike-cd'); ?>
+            </button>
+            <button type="button" class="button" id="jetstrike-export-data">
+                <span class="dashicons dashicons-download"></span>
+                <?php esc_html_e('Export Data', 'jetstrike-cd'); ?>
+            </button>
+            <button type="button" class="button" id="jetstrike-toggle-matrix">
+                <span class="dashicons dashicons-grid-view"></span>
+                <?php esc_html_e('Compatibility Matrix', 'jetstrike-cd'); ?>
+            </button>
+            <?php if ($tier === 'agency'): ?>
+            <button type="button" class="button" id="jetstrike-import-data">
+                <span class="dashicons dashicons-upload"></span>
+                <?php esc_html_e('Import Data', 'jetstrike-cd'); ?>
+            </button>
+            <input type="file" id="jetstrike-import-file" accept=".json" style="display: none;">
+            <?php endif; ?>
+        </div>
+
+        <!-- Compatibility Matrix (hidden by default, toggled by button) -->
+        <div id="jetstrike-matrix-container" style="display: none;">
+            <?php
+            $matrix = new \Jetstrike\ConflictDetector\Admin\CompatibilityMatrix($this->repository ?? $repository);
+            echo $matrix->render_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- HTML is escaped internally
+            ?>
         </div>
     </div>
 
