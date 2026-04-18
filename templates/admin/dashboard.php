@@ -143,6 +143,13 @@ $grade_color = $grade_colors[$health['grade']] ?? '#6c757d';
                 <span class="dashicons dashicons-grid-view"></span>
                 <?php esc_html_e('Compatibility Matrix', 'jetstrike-cd'); ?>
             </button>
+            <?php if ($tier === 'agency'): ?>
+            <button type="button" class="button" id="jetstrike-import-data">
+                <span class="dashicons dashicons-upload"></span>
+                <?php esc_html_e('Import Data', 'jetstrike-cd'); ?>
+            </button>
+            <input type="file" id="jetstrike-import-file" accept=".json" style="display: none;">
+            <?php endif; ?>
         </div>
 
         <!-- Compatibility Matrix (hidden by default, toggled by button) -->

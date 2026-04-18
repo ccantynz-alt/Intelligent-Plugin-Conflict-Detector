@@ -199,14 +199,30 @@
                 }
                 autoFixCell += '</td>';
 
+                var descriptionHtml = '';
+                if (conflict.ai_explanation) {
+                    descriptionHtml = '<strong>' + JetstrikeCD.escapeHtml(conflict.ai_explanation) + '</strong>';
+                    if (conflict.ai_impact) {
+                        descriptionHtml += '<br><span style="color: #b91c1c; font-weight: 600;">' +
+                            JetstrikeCD.escapeHtml(conflict.ai_impact) + '</span>';
+                    }
+                    descriptionHtml += '<br><em style="color: #94a3b8; font-size: 12px;">Technical: ' +
+                        JetstrikeCD.escapeHtml(conflict.description) + '</em>';
+                } else {
+                    descriptionHtml = '<strong>' + JetstrikeCD.escapeHtml(conflict.description) + '</strong>';
+                }
+
+                if (conflict.recommendation) {
+                    descriptionHtml += '<br><em class="jetstrike-cd-recommendation">' +
+                        JetstrikeCD.escapeHtml(conflict.recommendation) + '</em>';
+                }
+
                 $table.append(
                     '<tr data-conflict-id="' + conflict.id + '">' +
                     '<td><span class="jetstrike-cd-badge jetstrike-cd-badge--' + conflict.severity + '">' +
                         JetstrikeCD.capitalize(conflict.severity) + '</span></td>' +
                     '<td>' + JetstrikeCD.escapeHtml(conflict.conflict_type.replace(/_/g, ' ')) + '</td>' +
-                    '<td><strong>' + JetstrikeCD.escapeHtml(conflict.description) + '</strong>' +
-                        (conflict.recommendation ? '<br><em class="jetstrike-cd-recommendation">' +
-                        JetstrikeCD.escapeHtml(conflict.recommendation) + '</em>' : '') + '</td>' +
+                    '<td>' + descriptionHtml + '</td>' +
                     '<td><code>' + JetstrikeCD.escapeHtml(JetstrikeCD.dirname(conflict.plugin_a)) + '</code>' +
                         pluginB + '</td>' +
                     autoFixCell +

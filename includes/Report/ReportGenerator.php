@@ -23,6 +23,7 @@ namespace Jetstrike\ConflictDetector\Report;
 use Jetstrike\ConflictDetector\Database\Repository;
 use Jetstrike\ConflictDetector\Monitor\HealthMonitor;
 use Jetstrike\ConflictDetector\Resolver\AutoResolver;
+use Jetstrike\ConflictDetector\AI\ExplanationGenerator;
 
 final class ReportGenerator {
 
@@ -56,16 +57,27 @@ final class ReportGenerator {
         $site_name = get_bloginfo('name');
         $generated_at = current_time('mysql');
 
+        $ai = new ExplanationGenerator();
+        $ai_explanations = $ai->explain_batch($all_active);
+        $ai_summary = $ai->generate_executive_summary(
+            $all_active,
+            $health,
+            $site_name,
+            count($this->get_plugin_list())
+        );
+
         $html = $this->build_html([
-            'site_name'    => $site_name,
-            'site_url'     => $site_url,
-            'generated_at' => $generated_at,
-            'health'       => $health,
-            'scan'         => $scan,
-            'conflicts'    => $conflicts,
-            'all_active'   => $all_active,
-            'summary'      => $this->build_summary($all_active),
-            'plugins'      => $this->get_plugin_list(),
+            'site_name'       => $site_name,
+            'site_url'        => $site_url,
+            'generated_at'    => $generated_at,
+            'health'          => $health,
+            'scan'            => $scan,
+            'conflicts'       => $conflicts,
+            'all_active'      => $all_active,
+            'summary'         => $this->build_summary($all_active),
+            'plugins'         => $this->get_plugin_list(),
+            'ai_explanations' => $ai_explanations,
+            'ai_summary'      => $ai_summary['summary'],
         ]);
 
         $filename = sprintf(
@@ -106,6 +118,16 @@ final class ReportGenerator {
         $html .= '<p>' . esc_html($data['site_name']) . ' &mdash; ' . esc_url($data['site_url']) . '</p>';
         $html .= '<p>Generated: ' . esc_html($data['generated_at']) . '</p>';
         $html .= '</div></div>';
+
+        // AI Executive Summary.
+        if (! empty($data['ai_summary'])) {
+            $html .= '<div class="report-section">';
+            $html .= '<div style="background: #f0f7ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 20px;">';
+            $html .= '<h2 style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; color: #1e40af; margin-bottom: 12px; border: 0; padding: 0;">Executive Summary</h2>';
+            $html .= '<div style="font-size: 14px; color: #334155; line-height: 1.7; white-space: pre-line;">';
+            $html .= esc_html($data['ai_summary']);
+            $html .= '</div></div></div>';
+        }
 
         // Health Score.
         $score = (int) ($data['health']['score'] ?? 0);
@@ -178,7 +200,23 @@ final class ReportGenerator {
                 }
 
                 $html .= '</div>';
-                $html .= '<p class="conflict-desc">' . esc_html($conflict->description) . '</p>';
+
+                // AI plain-English explanation (replaces technical description for non-technical readers).
+                $conflict_id = (int) ($conflict->id ?? 0);
+                $ai_data = $data['ai_explanations'][$conflict_id] ?? null;
+
+                if ($ai_data && ! empty($ai_data['explanation'])) {
+                    $html .= '<p class="conflict-desc">' . esc_html($ai_data['explanation']) . '</p>';
+                    if (! empty($ai_data['impact'])) {
+                        $html .= '<p class="conflict-desc" style="color: #b91c1c; font-weight: 600; margin-top: 4px;">';
+                        $html .= esc_html($ai_data['impact']) . '</p>';
+                    }
+                    $html .= '<p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">';
+                    $html .= '<em>Technical: ' . esc_html($conflict->description) . '</em></p>';
+                } else {
+                    $html .= '<p class="conflict-desc">' . esc_html($conflict->description) . '</p>';
+                }
+
                 $html .= '<div class="conflict-plugins">';
                 $html .= '<code>' . esc_html(dirname($conflict->plugin_a)) . '</code>';
 
