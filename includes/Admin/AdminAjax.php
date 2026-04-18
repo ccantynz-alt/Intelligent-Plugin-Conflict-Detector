@@ -15,6 +15,7 @@ use Jetstrike\ConflictDetector\Resolver\AutoResolver;
 use Jetstrike\ConflictDetector\Report\ReportGenerator;
 use Jetstrike\ConflictDetector\Export\ExportManager;
 use Jetstrike\ConflictDetector\Analyzer\PreUpdateAnalyzer;
+use Jetstrike\ConflictDetector\AI\ExplanationGenerator;
 use Jetstrike\ConflictDetector\Subscription\FeatureFlags;
 
 final class AdminAjax {
@@ -42,6 +43,10 @@ final class AdminAjax {
         add_action('wp_ajax_jetstrike_cd_pre_update_check', [$this, 'pre_update_check']);
         add_action('wp_ajax_jetstrike_cd_activate_license', [$this, 'activate_license']);
         add_action('wp_ajax_jetstrike_cd_deactivate_license', [$this, 'deactivate_license']);
+        add_action('wp_ajax_jetstrike_cd_ai_explain', [$this, 'ai_explain_conflict']);
+        add_action('wp_ajax_jetstrike_cd_plugin_health', [$this, 'plugin_health_check']);
+        add_action('wp_ajax_jetstrike_cd_db_health', [$this, 'database_health_check']);
+        add_action('wp_ajax_jetstrike_cd_php_compat', [$this, 'php_compat_check']);
     }
 
     /**
@@ -131,19 +136,24 @@ final class AdminAjax {
 
         if ($scan->status === 'completed') {
             $conflicts = $this->repository->get_conflicts_for_scan($scan_id);
-            $data['conflicts'] = array_map(function ($c) {
+            $ai = new ExplanationGenerator();
+
+            $data['conflicts'] = array_map(function ($c) use ($ai) {
                 $can_fix = AutoResolver::can_auto_resolve($c->conflict_type);
+                $explanation = $ai->explain_conflict($c);
 
                 return [
-                    'id'             => (int) $c->id,
-                    'plugin_a'       => $c->plugin_a,
-                    'plugin_b'       => $c->plugin_b,
-                    'conflict_type'  => $c->conflict_type,
-                    'severity'       => $c->severity,
-                    'description'    => $c->description,
-                    'recommendation' => $c->recommendation,
-                    'can_auto_fix'   => $can_fix['can_resolve'],
+                    'id'              => (int) $c->id,
+                    'plugin_a'        => $c->plugin_a,
+                    'plugin_b'        => $c->plugin_b,
+                    'conflict_type'   => $c->conflict_type,
+                    'severity'        => $c->severity,
+                    'description'     => $c->description,
+                    'recommendation'  => $c->recommendation,
+                    'can_auto_fix'    => $can_fix['can_resolve'],
                     'fix_description' => $can_fix['description'],
+                    'ai_explanation'  => $explanation['explanation'],
+                    'ai_impact'       => $explanation['impact'],
                 ];
             }, $conflicts);
         }
@@ -378,6 +388,79 @@ final class AdminAjax {
         $license->deactivate();
 
         wp_send_json_success(['deactivated' => true]);
+    }
+
+    /**
+     * Get AI-powered explanation for a conflict.
+     */
+    public function ai_explain_conflict(): void {
+        $this->verify_request();
+
+        $conflict_id = (int) ($_POST['conflict_id'] ?? 0);
+
+        if ($conflict_id < 1) {
+            wp_send_json_error(['message' => __('Invalid conflict ID.', 'jetstrike-cd')]);
+        }
+
+        $conflict = $this->repository->get_conflict($conflict_id);
+
+        if ($conflict === null) {
+            wp_send_json_error(['message' => __('Conflict not found.', 'jetstrike-cd')]);
+        }
+
+        $ai = new ExplanationGenerator();
+        $result = $ai->explain_conflict($conflict);
+
+        wp_send_json_success($result);
+    }
+
+    /**
+     * Run plugin health analysis.
+     */
+    public function plugin_health_check(): void {
+        $this->verify_request();
+
+        if (! FeatureFlags::can('pro_features')) {
+            wp_send_json_error(['message' => __('Plugin Health Check requires a Pro or Agency license.', 'jetstrike-cd')]);
+        }
+
+        $analyzer = new \Jetstrike\ConflictDetector\Analyzer\PluginHealthAnalyzer();
+        $results = $analyzer->analyze();
+
+        wp_send_json_success($results);
+    }
+
+    /**
+     * Run database health analysis.
+     */
+    public function database_health_check(): void {
+        $this->verify_request();
+
+        if (! FeatureFlags::can('pro_features')) {
+            wp_send_json_error(['message' => __('Database Health Check requires a Pro or Agency license.', 'jetstrike-cd')]);
+        }
+
+        $analyzer = new \Jetstrike\ConflictDetector\Analyzer\DatabaseHealthAnalyzer();
+        $results = $analyzer->analyze();
+
+        wp_send_json_success($results);
+    }
+
+    /**
+     * Run PHP compatibility analysis.
+     */
+    public function php_compat_check(): void {
+        $this->verify_request();
+
+        if (! FeatureFlags::can('pro_features')) {
+            wp_send_json_error(['message' => __('PHP Compatibility Check requires a Pro or Agency license.', 'jetstrike-cd')]);
+        }
+
+        $target_php = sanitize_text_field($_POST['target_php'] ?? '');
+        $analyzer = new \Jetstrike\ConflictDetector\Analyzer\PHPCompatAnalyzer();
+        $results = $analyzer->analyze($target_php ?: null);
+
+        wp_send_json_success($results);
     }
 
     /**

@@ -124,11 +124,15 @@ final class FeatureFlags {
     public static function scan_history_limit(): int {
         $tier = self::get_tier();
 
-        return match ($tier) {
-            self::TIER_AGENCY => 0,
-            self::TIER_PRO    => 50,
-            default           => 3,
-        };
+        if ($tier === self::TIER_AGENCY) {
+            return 0;
+        }
+
+        if ($tier === self::TIER_PRO) {
+            return 50;
+        }
+
+        return 3;
     }
 
     /**
@@ -139,10 +143,11 @@ final class FeatureFlags {
     public static function weekly_scan_limit(): int {
         $tier = self::get_tier();
 
-        return match ($tier) {
-            self::TIER_AGENCY, self::TIER_PRO => 0,
-            default => 1,
-        };
+        if ($tier === self::TIER_AGENCY || $tier === self::TIER_PRO) {
+            return 0;
+        }
+
+        return 1;
     }
 
     /**

@@ -146,13 +146,17 @@ final class HealthMonitor {
 
         $score = max(0, min(100, $score));
 
-        $grade = match (true) {
-            $score >= 90 => 'A',
-            $score >= 75 => 'B',
-            $score >= 60 => 'C',
-            $score >= 40 => 'D',
-            default      => 'F',
-        };
+        if ($score >= 90) {
+            $grade = 'A';
+        } elseif ($score >= 75) {
+            $grade = 'B';
+        } elseif ($score >= 60) {
+            $grade = 'C';
+        } elseif ($score >= 40) {
+            $grade = 'D';
+        } else {
+            $grade = 'F';
+        }
 
         return [
             'score'      => $score,
