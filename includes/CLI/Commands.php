@@ -262,10 +262,10 @@ final class Commands {
         $status   = $assoc_args['status'] ?? 'active';
         $format   = $assoc_args['format'] ?? 'table';
 
-        $all_conflicts = $this->repository->list_active_conflicts(1, 100);
+        $result = $this->repository->list_active_conflicts(1, 100);
         $conflicts = [];
 
-        foreach ($all_conflicts as $c) {
+        foreach ($result['items'] as $c) {
             if (! empty($severity) && $c->severity !== $severity) {
                 continue;
             }

@@ -40,11 +40,24 @@ final class ScanQueue {
      * @return int Scan ID.
      */
     public function enqueue(string $scan_type, string $triggered_by = 'manual', array $options = []): int {
-        // Don't queue if a scan is already running.
+        // Don't queue if a scan is already running (unless it's stuck).
         if ($this->repository->has_running_scan()) {
             $running = $this->get_running_scan_id();
+
             if ($running > 0) {
-                return $running;
+                // Auto-cancel scans stuck for more than 30 minutes.
+                $scan = $this->repository->get_scan($running);
+
+                if ($scan !== null && ! empty($scan->started_at)) {
+                    $started = strtotime($scan->started_at);
+                    if ($started > 0 && (time() - $started) > 1800) {
+                        $this->cancel($running);
+                    } else {
+                        return $running;
+                    }
+                } else {
+                    return $running;
+                }
             }
         }
 
@@ -120,6 +133,11 @@ final class ScanQueue {
                     break;
 
                 default:
+                    $this->repository->update_scan($scan_id, [
+                        'status'       => 'failed',
+                        'completed_at' => current_time('mysql', true),
+                        'results'      => wp_json_encode(['error' => sprintf('Unknown scan type: %s', $scan->scan_type)]),
+                    ]);
                     $is_complete = true;
             }
 
@@ -293,10 +311,15 @@ final class ScanQueue {
         delete_transient('jetstrike_cd_scan_results');
         delete_transient('jetstrike_cd_conflict_summary');
 
-        // Send anonymized telemetry (if opted in).
-        $telemetry = new \Jetstrike\ConflictDetector\Cloud\Telemetry();
-        $plugins_tested = json_decode($this->repository->get_scan($scan_id)->plugins_tested ?? '[]', true);
-        $telemetry->report_scan($conflicts, count(is_array($plugins_tested) ? $plugins_tested : []));
+        // Send anonymized telemetry (if opted in). Non-blocking — never fail the scan.
+        try {
+            $telemetry = new \Jetstrike\ConflictDetector\Cloud\Telemetry();
+            $scan_data = $this->repository->get_scan($scan_id);
+            $plugins_tested = json_decode($scan_data->plugins_tested ?? '[]', true);
+            $telemetry->report_scan($conflicts, count(is_array($plugins_tested) ? $plugins_tested : []));
+        } catch (\Throwable $e) {
+            // Telemetry failures must never break scan finalization.
+        }
     }
 
     /**
@@ -440,7 +463,11 @@ final class ScanQueue {
         $table = $wpdb->prefix . 'jetstrike_scans';
 
         $id = $wpdb->get_var(
-            "SELECT id FROM {$table} WHERE status IN ('queued', 'running') ORDER BY created_at DESC LIMIT 1"
+            $wpdb->prepare(
+                "SELECT id FROM {$table} WHERE status IN (%s, %s) ORDER BY created_at DESC LIMIT 1",
+                'queued',
+                'running'
+            )
         );
 
         return $id ? (int) $id : 0;

@@ -537,168 +537,51 @@
     white-space: nowrap;
 }
 
-/* ── Compatibility Matrix ─────────────────────────────────── */
+/* ── Accessibility ────────────────────────────────────────── */
 
-.jetstrike-cd-matrix-wrapper {
-    margin-top: 16px;
+@media (prefers-reduced-motion: reduce) {
+    .jetstrike-cd-progress-fill {
+        animation: none;
+    }
+
+    .jetstrike-cd-spinner {
+        animation: none;
+        border-top-color: transparent;
+    }
+
+    .jetstrike-cd-autofix-btn,
+    .jetstrike-cd-revert-btn,
+    .button {
+        transition: none;
+    }
 }
 
-.jetstrike-cd-matrix-stats {
-    display: flex;
-    gap: 24px;
-    margin-bottom: 16px;
-    font-size: 14px;
+.jetstrike-cd-scan-btn:focus-visible,
+.jetstrike-cd-autofix-btn:focus-visible,
+.jetstrike-cd-revert-btn:focus-visible,
+.jetstrike-cd-conflict-action:focus-visible,
+.jetstrike-cd-view-all:focus-visible,
+.button:focus-visible {
+    outline: 2px solid #2271b1;
+    outline-offset: 2px;
+    box-shadow: none;
 }
 
-.jetstrike-cd-matrix-stat strong {
-    font-size: 18px;
-}
-
-.jetstrike-cd-matrix-stat--good strong { color: #22c55e; }
-.jetstrike-cd-matrix-stat--bad strong { color: #ef4444; }
-
-.jetstrike-cd-matrix-scroll {
-    overflow-x: auto;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-}
-
-.jetstrike-cd-matrix-table {
-    border-collapse: collapse;
-    width: 100%;
-    min-width: max-content;
-}
-
-.jetstrike-cd-matrix-table th,
-.jetstrike-cd-matrix-table td {
-    padding: 8px 10px;
-    text-align: center;
-    border: 1px solid #e2e8f0;
-    font-size: 13px;
-}
-
-.jetstrike-cd-matrix-header {
-    background: #f8fafc;
-    font-weight: 600;
-    max-width: 120px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.jetstrike-cd-matrix-header span {
-    display: block;
-    transform: rotate(-45deg);
-    white-space: nowrap;
-    font-size: 11px;
-}
-
-.jetstrike-cd-matrix-row-header {
-    text-align: left !important;
-    background: #f8fafc;
-    font-weight: 600;
-    white-space: nowrap;
-    max-width: 150px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.jetstrike-cd-matrix-cell {
-    width: 40px;
-    height: 40px;
+.jetstrike-cd-table th[scope="col"] {
     cursor: default;
-    transition: all 0.2s;
-    font-size: 16px;
 }
 
-.jetstrike-cd-matrix-cell:hover {
-    transform: scale(1.1);
-    box-shadow: 0 0 8px rgba(0,0,0,0.15);
-    z-index: 1;
-    position: relative;
-}
+/* High contrast mode support */
+@media (forced-colors: active) {
+    .jetstrike-cd-badge {
+        border: 1px solid currentColor;
+    }
 
-.jetstrike-cd-matrix-cell--self {
-    background: #f1f5f9;
-    color: #cbd5e1;
-}
+    .jetstrike-cd-health-circle {
+        border-color: currentColor;
+    }
 
-.jetstrike-cd-matrix-cell--compatible {
-    background: #f0fdf4;
-    color: #22c55e;
-}
-
-.jetstrike-cd-matrix-cell--conflict.jetstrike-cd-matrix-cell--critical {
-    background: #fef2f2;
-    color: #ef4444;
-}
-
-.jetstrike-cd-matrix-cell--conflict.jetstrike-cd-matrix-cell--high {
-    background: #fff7ed;
-    color: #f97316;
-}
-
-.jetstrike-cd-matrix-cell--conflict.jetstrike-cd-matrix-cell--medium {
-    background: #fefce8;
-    color: #eab308;
-}
-
-.jetstrike-cd-matrix-cell--conflict.jetstrike-cd-matrix-cell--low {
-    background: #eff6ff;
-    color: #3b82f6;
-}
-
-.jetstrike-cd-matrix-cell--resolved {
-    background: #f0fdf4;
-    color: #86efac;
-}
-
-.jetstrike-cd-matrix-legend {
-    display: flex;
-    gap: 16px;
-    margin-top: 12px;
-    font-size: 13px;
-    color: #64748b;
-}
-
-.jetstrike-cd-legend-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.jetstrike-cd-legend-color {
-    width: 16px;
-    height: 16px;
-    border-radius: 3px;
-    border: 1px solid #e2e8f0;
-}
-
-.jetstrike-cd-legend--compatible { background: #dcfce7; }
-.jetstrike-cd-legend--medium { background: #fef9c3; }
-.jetstrike-cd-legend--high { background: #fed7aa; }
-.jetstrike-cd-legend--critical { background: #fecaca; }
-
-.jetstrike-cd-matrix-empty {
-    padding: 24px;
-    text-align: center;
-    color: #64748b;
-}
-
-/* ── Toolbar Actions (Report, Export, etc.) ─────────────── */
-
-.jetstrike-cd-toolbar {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 16px;
-    flex-wrap: wrap;
-}
-
-.jetstrike-cd-toolbar .button .dashicons {
-    font-size: 16px;
-    width: 16px;
-    height: 16px;
-    vertical-align: middle;
-    margin-right: 4px;
-    margin-top: -2px;
+    .jetstrike-cd-progress-fill {
+        background: Highlight;
+    }
 }

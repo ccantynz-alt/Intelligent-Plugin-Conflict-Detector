@@ -529,48 +529,83 @@ final class AutoResolver {
 
     /**
      * Generate a function_exists guard to prevent fatal redeclaration errors.
+     *
+     * PHP cannot intercept "Cannot redeclare" at the error-handler level because
+     * it is an E_COMPILE_ERROR. The only reliable mu-plugin approach is to
+     * scan the second plugin's files, locate the file that declares the
+     * duplicate function, and load a version of it that wraps the declaration
+     * in a function_exists() check — effectively skipping the redeclaration.
+     *
+     * We achieve this by reordering the active plugins so the preferred plugin
+     * loads first, and then prepending a shutdown-safety handler to detect the
+     * fatal and deactivate the conflicting plugin automatically.
      */
     private function generate_function_guard(string $function_name, string $plugin_b): string {
-        $safe_func = preg_replace('/[^a-zA-Z0-9_]/', '_', $function_name);
-        $plugin_dir = dirname(WP_PLUGIN_DIR . '/' . $plugin_b);
+        $safe_func  = preg_replace('/[^a-zA-Z0-9_]/', '_', $function_name);
+        $safe_slug  = sanitize_title(dirname($plugin_b));
+        $plugin_dir = dirname($plugin_b);
 
         return <<<PHP
 /**
  * Prevents fatal error from function redeclaration of {$safe_func}().
  *
- * Strategy: Hook into plugin loading and use a custom autoload/include wrapper
- * that skips the file containing the duplicate function declaration from the
- * second plugin, allowing the first plugin's definition to stand.
+ * Strategy: Reorder active plugins so the preferred declaration loads first,
+ * then register a shutdown handler to auto-deactivate the second plugin
+ * if a "Cannot redeclare" fatal occurs.
  */
+
+// 1. Move the conflicting plugin to load last so the preferred definition wins.
 add_filter('option_active_plugins', function (\$plugins) {
-    // This filter runs before plugins are loaded, allowing us to
-    // set up the function guard early enough.
-    if (! function_exists('{$safe_func}')) {
-        return \$plugins;
+    \$target = null;
+    \$filtered = [];
+
+    foreach (\$plugins as \$plugin) {
+        if (strpos(\$plugin, '{$plugin_dir}/') === 0) {
+            \$target = \$plugin;
+        } else {
+            \$filtered[] = \$plugin;
+        }
     }
 
-    // If the function already exists by the time the second plugin loads,
-    // we use a shutdown-safe approach: register a tick function that
-    // intercepts the fatal and recovers.
-    return \$plugins;
+    if (\$target !== null) {
+        \$filtered[] = \$target;
+    }
+
+    return \$filtered;
+}, 1);
+
+// 2. Register a shutdown handler that catches the fatal and deactivates
+//    the conflicting plugin so the site remains accessible.
+register_shutdown_function(function () {
+    \$error = error_get_last();
+
+    if (\$error === null || \$error['type'] !== E_COMPILE_ERROR) {
+        return;
+    }
+
+    if (stripos(\$error['message'], 'Cannot redeclare {$safe_func}') === false) {
+        return;
+    }
+
+    // Deactivate the conflicting plugin to restore the site.
+    \$active = get_option('active_plugins', []);
+    \$updated = array_values(array_filter(\$active, function (\$p) {
+        return strpos(\$p, '{$plugin_dir}/') !== 0;
+    }));
+
+    if (count(\$updated) < count(\$active)) {
+        update_option('active_plugins', \$updated);
+
+        // Store a notice so the admin knows what happened.
+        update_option('jetstrike_cd_pending_notices', [[
+            'type'           => 'scan_complete',
+            'conflict_count' => 1,
+            'critical_count' => 1,
+            'scan_id'        => 0,
+            'created_at'     => current_time('mysql', true),
+        ]]);
+    }
 });
-
-// Runkit-free approach: use a custom error handler during plugin load.
-add_action('muplugins_loaded', function () {
-    \$prev_handler = set_error_handler(function (\$errno, \$errstr, \$errfile) use (&\$prev_handler) {
-        // Suppress "Cannot redeclare" fatals for our guarded function.
-        if (stripos(\$errstr, 'Cannot redeclare {$safe_func}') !== false) {
-            return true; // Suppress the error.
-        }
-
-        // Pass through to previous handler.
-        if (\$prev_handler) {
-            return call_user_func(\$prev_handler, \$errno, \$errstr, \$errfile);
-        }
-
-        return false;
-    });
-}, 0);
 PHP;
     }
 

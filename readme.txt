@@ -1,10 +1,13 @@
 === Jetstrike Conflict Detector ===
 Contributors: jetstrike
+Donate link: https://jetstrike.io/
 Tags: conflict detector, plugin conflicts, woocommerce, troubleshooting, site health
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
 Stable tag: 1.0.0
+Text Domain: jetstrike-cd
+Domain Path: /languages
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -117,24 +120,23 @@ The free and Pro tiers support a single site. The Agency tier includes a Network
 == Changelog ==
 
 = 1.0.0 =
-* Initial release.
-* Static analysis: functions, classes, globals, hooks, scripts, styles.
-* Runtime sandbox with binary-search isolation.
-* WooCommerce-specific analyser (payment gateways, checkout, HPOS).
-* Pre-Update Simulation engine.
-* Compatibility Matrix visual grid.
-* Professional HTML report generator.
-* Export / Import for cross-site analysis.
-* Multisite Network Scanner (Agency).
-* Background monitoring and plugin-update watching.
-* REST API under `jetstrike/v1` namespace.
-* WP-CLI command suite.
-* Email and Slack notifications.
-* WordPress Site Health integration.
-* Admin dashboard with health scoring and scan history.
-* Auto-Fix Engine (opt-in beta) with post-apply health verification and automatic rollback on failure.
-* Free / Pro / Agency subscription tiers via Freemius.
-* Opt-in anonymous telemetry for the conflict intelligence database.
+* Initial release
+* Static code analysis (functions, classes, globals, hooks, resources)
+* Runtime sandbox testing with binary search
+* WooCommerce-specific conflict analysis (payment gateways, checkout fields, HPOS)
+* One-click auto-fix engine with reversible mu-plugin patches
+* PHP dependency version conflict detection (Guzzle, Stripe, Carbon, etc.)
+* JavaScript deep analysis (global pollution, jQuery overrides, prototype conflicts)
+* Database conflict detection (options, cron hooks, CPTs, taxonomies, meta keys)
+* Background monitoring and update watching
+* REST API for programmatic conflict management
+* WP-CLI integration for CI/CD pipelines
+* Email and Slack notifications
+* Cloud conflict intelligence powered by anonymized community data
+* WordPress Site Health integration
+* Admin dashboard with health scoring
+* Free/Pro/Agency subscription tiers
+* WCAG 2.1 AA accessible admin interface
 
 == Upgrade Notice ==
 

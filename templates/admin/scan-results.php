@@ -51,12 +51,12 @@ defined('ABSPATH') || exit;
         <table class="widefat striped jetstrike-cd-table">
             <thead>
                 <tr>
-                    <th><?php esc_html_e('Severity', 'jetstrike-cd'); ?></th>
-                    <th><?php esc_html_e('Type', 'jetstrike-cd'); ?></th>
-                    <th><?php esc_html_e('Description', 'jetstrike-cd'); ?></th>
-                    <th><?php esc_html_e('Plugins', 'jetstrike-cd'); ?></th>
-                    <th><?php esc_html_e('Recommendation', 'jetstrike-cd'); ?></th>
-                    <th><?php esc_html_e('Status', 'jetstrike-cd'); ?></th>
+                    <th scope="col"><?php esc_html_e('Severity', 'jetstrike-cd'); ?></th>
+                    <th scope="col"><?php esc_html_e('Type', 'jetstrike-cd'); ?></th>
+                    <th scope="col"><?php esc_html_e('Description', 'jetstrike-cd'); ?></th>
+                    <th scope="col"><?php esc_html_e('Plugins', 'jetstrike-cd'); ?></th>
+                    <th scope="col"><?php esc_html_e('Recommendation', 'jetstrike-cd'); ?></th>
+                    <th scope="col"><?php esc_html_e('Status', 'jetstrike-cd'); ?></th>
                 </tr>
             </thead>
             <tbody>
@@ -103,13 +103,13 @@ defined('ABSPATH') || exit;
         <table class="widefat striped jetstrike-cd-table">
             <thead>
                 <tr>
-                    <th><?php esc_html_e('ID', 'jetstrike-cd'); ?></th>
-                    <th><?php esc_html_e('Type', 'jetstrike-cd'); ?></th>
-                    <th><?php esc_html_e('Status', 'jetstrike-cd'); ?></th>
-                    <th><?php esc_html_e('Conflicts', 'jetstrike-cd'); ?></th>
-                    <th><?php esc_html_e('Triggered By', 'jetstrike-cd'); ?></th>
-                    <th><?php esc_html_e('Date', 'jetstrike-cd'); ?></th>
-                    <th><?php esc_html_e('Actions', 'jetstrike-cd'); ?></th>
+                    <th scope="col"><?php esc_html_e('ID', 'jetstrike-cd'); ?></th>
+                    <th scope="col"><?php esc_html_e('Type', 'jetstrike-cd'); ?></th>
+                    <th scope="col"><?php esc_html_e('Status', 'jetstrike-cd'); ?></th>
+                    <th scope="col"><?php esc_html_e('Conflicts', 'jetstrike-cd'); ?></th>
+                    <th scope="col"><?php esc_html_e('Triggered By', 'jetstrike-cd'); ?></th>
+                    <th scope="col"><?php esc_html_e('Date', 'jetstrike-cd'); ?></th>
+                    <th scope="col"><?php esc_html_e('Actions', 'jetstrike-cd'); ?></th>
                 </tr>
             </thead>
             <tbody>
@@ -137,7 +137,8 @@ defined('ABSPATH') || exit;
 
         <?php
         // Pagination.
-        $total_pages = (int) ceil($scans['total'] / 20);
+        $per_page = 20;
+        $total_pages = $per_page > 0 ? (int) ceil($scans['total'] / $per_page) : 1;
 
         if ($total_pages > 1): ?>
         <div class="tablenav bottom">

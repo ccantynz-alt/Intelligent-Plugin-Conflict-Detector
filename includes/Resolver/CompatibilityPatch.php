@@ -34,6 +34,10 @@ final class CompatibilityPatch {
      * @return string|null Filename on success, null on failure.
      */
     public function write_patch(int $conflict_id, string $fix_type, string $code, string $description): ?string {
+        if ($conflict_id <= 0) {
+            return null;
+        }
+
         $patch_dir = $this->ensure_patch_dir();
 
         if ($patch_dir === null) {

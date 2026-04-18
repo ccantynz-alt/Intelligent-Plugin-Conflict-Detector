@@ -167,6 +167,27 @@ final class HealthMonitor {
     }
 
     /**
+     * Get health data including score, grade, and component breakdown.
+     *
+     * @return array{score: int, grade: string, factors: array, components: array, checked_at: string}
+     */
+    public function get_health_data(): array {
+        $health = $this->calculate_health_score();
+
+        $components = [];
+        foreach ($health['factors'] as $factor) {
+            $components[$factor['name']] = [
+                'impact'  => $factor['impact'],
+                'message' => $factor['message'],
+            ];
+        }
+
+        $health['components'] = $components;
+
+        return $health;
+    }
+
+    /**
      * Register tests with WordPress Site Health.
      *
      * @param array $tests Existing tests.

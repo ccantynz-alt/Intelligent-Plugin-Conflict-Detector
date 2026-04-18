@@ -130,16 +130,37 @@ final class SlackNotifier {
      * Send payload to Slack webhook.
      *
      * @param array $payload Slack message payload.
+     * @return bool True if the webhook accepted the message.
      */
-    private function send(array $payload): void {
+    private function send(array $payload): bool {
         if (empty($this->webhook_url)) {
-            return;
+            return false;
         }
 
-        wp_remote_post($this->webhook_url, [
+        // Validate the webhook URL before sending.
+        if (! preg_match('#^https://hooks\.slack\.com/services/#', $this->webhook_url)) {
+            error_log('[Jetstrike] Invalid Slack webhook URL configured.');
+            return false;
+        }
+
+        $response = wp_remote_post($this->webhook_url, [
             'timeout' => 10,
             'headers' => ['Content-Type' => 'application/json'],
             'body'    => wp_json_encode($payload),
         ]);
+
+        if (is_wp_error($response)) {
+            error_log(sprintf('[Jetstrike] Slack notification failed: %s', $response->get_error_message()));
+            return false;
+        }
+
+        $status = wp_remote_retrieve_response_code($response);
+
+        if ($status < 200 || $status >= 300) {
+            error_log(sprintf('[Jetstrike] Slack returned HTTP %d', $status));
+            return false;
+        }
+
+        return true;
     }
 }

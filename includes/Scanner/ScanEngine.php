@@ -59,7 +59,7 @@ final class ScanEngine {
             $all_conflicts = array_merge($all_conflicts, $perf);
         }
 
-        return $all_conflicts;
+        return $this->deduplicate_conflicts($all_conflicts);
     }
 
     /**
@@ -162,6 +162,40 @@ final class ScanEngine {
         } finally {
             $sandbox->cleanup();
         }
+    }
+
+    /**
+     * Remove duplicate conflicts (same plugin pair + same type).
+     *
+     * @param array $conflicts Raw conflict list.
+     * @return array Deduplicated list — higher severity wins when duplicates exist.
+     */
+    private function deduplicate_conflicts(array $conflicts): array {
+        $severity_rank = ['critical' => 0, 'high' => 1, 'medium' => 2, 'low' => 3];
+        $unique = [];
+
+        foreach ($conflicts as $conflict) {
+            $a = $conflict['plugin_a'] ?? '';
+            $b = $conflict['plugin_b'] ?? '';
+            $type = $conflict['type'] ?? '';
+
+            // Normalize key so (A,B) and (B,A) are treated as the same pair.
+            $pair = $a < $b ? "{$a}|{$b}" : "{$b}|{$a}";
+            $key = "{$pair}|{$type}";
+
+            if (! isset($unique[$key])) {
+                $unique[$key] = $conflict;
+            } else {
+                $existing_rank = $severity_rank[$unique[$key]['severity'] ?? 'low'] ?? 3;
+                $new_rank = $severity_rank[$conflict['severity'] ?? 'low'] ?? 3;
+
+                if ($new_rank < $existing_rank) {
+                    $unique[$key] = $conflict;
+                }
+            }
+        }
+
+        return array_values($unique);
     }
 
     /**
